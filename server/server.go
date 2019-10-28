@@ -149,7 +149,7 @@ func logger(h Handle) (n Handle) {
 		log.Info("api request").String("method", r.Method).
 			String("uri", r.URL.String()).
 			String("requester", r.RemoteAddr).
-			Int("duration", time.Since(start).Milliseconds()).
+			Int("duration_ms", time.Since(start).Milliseconds()).
 			Log()
 	}
 }
