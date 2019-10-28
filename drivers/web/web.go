@@ -27,7 +27,7 @@ import (
 	"github.com/MontFerret/ferret/pkg/drivers/cdp"
 	"github.com/MontFerret/ferret/pkg/runtime"
 	"github.com/MontFerret/ferret/pkg/runtime/logging"
-	"github.com/brunotm/replicant/replicant/transaction"
+	"github.com/brunotm/replicant/transaction"
 )
 
 const (

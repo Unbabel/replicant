@@ -22,11 +22,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/brunotm/replicant/transaction"
+	"github.com/brunotm/replicant/transaction/callback"
 	"github.com/containous/yaegi/interp"
 	"github.com/containous/yaegi/stdlib"
 	"github.com/google/uuid"
-	"github.com/brunotm/replicant/replicant/transaction"
-	"github.com/brunotm/replicant/replicant/transaction/callback"
 )
 
 const (
