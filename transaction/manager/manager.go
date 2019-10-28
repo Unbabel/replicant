@@ -44,16 +44,15 @@ type Manager struct {
 	emitters     []Emitter
 	scheduler    *scheduler.Scheduler
 	transactions Store
-	results      *results
+	results      sync.Map
 }
 
 // New creates a new manager
 func New(s Store) (manager *Manager) {
 	manager = &Manager{}
+	manager.transactions = s
 	manager.scheduler = scheduler.New()
 	manager.scheduler.Start()
-	manager.transactions = s
-	manager.results = &results{}
 	return manager
 }
 
@@ -104,7 +103,7 @@ func (m *Manager) Add(tx transaction.Transaction) (err error) {
 					}
 				}
 
-				m.results.Set(config.Name, result)
+				m.results.Store(config.Name, result)
 
 				if m.emitters != nil {
 					for x := 0; x < len(m.emitters); x++ {
@@ -186,14 +185,20 @@ func (m *Manager) Run(ctx context.Context, name string) (result transaction.Resu
 
 // GetResult fetches the latest result from a managed transaction
 func (m *Manager) GetResult(name string) (result transaction.Result, err error) {
-	return m.results.Get(name)
+	v, ok := m.results.Load(name)
+	if !ok {
+		return result, errors.New("no results found for the specified transaction")
+	}
+
+	return v.(transaction.Result), nil
+
 }
 
 // GetResults fetches all latest results
 func (m *Manager) GetResults() (results []transaction.Result) {
 
-	m.results.Iter(func(_ string, result transaction.Result) (proceed bool) {
-		results = append(results, result)
+	m.results.Range(func(_ interface{}, v interface{}) (proceed bool) {
+		results = append(results, v.(transaction.Result))
 		return true
 	})
 
