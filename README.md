@@ -122,6 +122,11 @@ script: |
 * Architecture and API documentation
 * Javascript transaction support
 
+## Related Projects
+
+* [Yaegi is Another Elegant Go Interpreter](https://github.com/containous/yaegi)
+* [Ferret Declarative web scraping](https://github.com/MontFerret/ferret)
+
 ## Contact
 Bruno Moura [brunotm@gmail.com](mailto:brunotm@gmail.com)
 
