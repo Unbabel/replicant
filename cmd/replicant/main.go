@@ -11,15 +11,15 @@ import (
 
 	"github.com/brunotm/log"
 	"github.com/brunotm/replicant/api"
-	_ "github.com/brunotm/replicant/replicant/drivers/go"
-	_ "github.com/brunotm/replicant/replicant/drivers/web"
-	"github.com/brunotm/replicant/replicant/emitter/elasticsearch"
-	"github.com/brunotm/replicant/replicant/emitter/prometheus"
-	"github.com/brunotm/replicant/replicant/emitter/stdout"
-	"github.com/brunotm/replicant/replicant/internal/webhook"
-	"github.com/brunotm/replicant/replicant/server"
-	"github.com/brunotm/replicant/replicant/store/memstore"
-	"github.com/brunotm/replicant/replicant/transaction/callback"
+	_ "github.com/brunotm/replicant/drivers/go"
+	_ "github.com/brunotm/replicant/drivers/web"
+	"github.com/brunotm/replicant/emitter/elasticsearch"
+	"github.com/brunotm/replicant/emitter/prometheus"
+	"github.com/brunotm/replicant/emitter/stdout"
+	"github.com/brunotm/replicant/internal/webhook"
+	"github.com/brunotm/replicant/server"
+	"github.com/brunotm/replicant/store/memstore"
+	"github.com/brunotm/replicant/transaction/callback"
 )
 
 // bloody and dirty
