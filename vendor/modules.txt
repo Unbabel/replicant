@@ -1,0 +1,153 @@
+# github.com/MontFerret/ferret v0.9.0
+github.com/MontFerret/ferret/pkg/compiler
+github.com/MontFerret/ferret/pkg/drivers
+github.com/MontFerret/ferret/pkg/drivers/cdp
+github.com/MontFerret/ferret/pkg/drivers/cdp/eval
+github.com/MontFerret/ferret/pkg/drivers/cdp/events
+github.com/MontFerret/ferret/pkg/drivers/cdp/input
+github.com/MontFerret/ferret/pkg/drivers/cdp/templates
+github.com/MontFerret/ferret/pkg/drivers/common
+github.com/MontFerret/ferret/pkg/parser
+github.com/MontFerret/ferret/pkg/parser/fql
+github.com/MontFerret/ferret/pkg/runtime
+github.com/MontFerret/ferret/pkg/runtime/collections
+github.com/MontFerret/ferret/pkg/runtime/core
+github.com/MontFerret/ferret/pkg/runtime/expressions
+github.com/MontFerret/ferret/pkg/runtime/expressions/clauses
+github.com/MontFerret/ferret/pkg/runtime/expressions/literals
+github.com/MontFerret/ferret/pkg/runtime/expressions/operators
+github.com/MontFerret/ferret/pkg/runtime/logging
+github.com/MontFerret/ferret/pkg/runtime/values
+github.com/MontFerret/ferret/pkg/runtime/values/types
+github.com/MontFerret/ferret/pkg/stdlib
+github.com/MontFerret/ferret/pkg/stdlib/arrays
+github.com/MontFerret/ferret/pkg/stdlib/collections
+github.com/MontFerret/ferret/pkg/stdlib/html
+github.com/MontFerret/ferret/pkg/stdlib/math
+github.com/MontFerret/ferret/pkg/stdlib/objects
+github.com/MontFerret/ferret/pkg/stdlib/strings
+github.com/MontFerret/ferret/pkg/stdlib/types
+github.com/MontFerret/ferret/pkg/stdlib/utils
+# github.com/PuerkitoBio/goquery v1.5.0
+github.com/PuerkitoBio/goquery
+# github.com/andybalholm/cascadia v1.1.0
+github.com/andybalholm/cascadia
+# github.com/antlr/antlr4 v0.0.0-20191011202612-ad2bd05285ca
+github.com/antlr/antlr4/runtime/Go/antlr
+# github.com/beorn7/perks v1.0.1
+github.com/beorn7/perks/quantile
+# github.com/brunotm/log v0.2.3
+github.com/brunotm/log
+# github.com/cespare/xxhash/v2 v2.1.0
+github.com/cespare/xxhash/v2
+# github.com/containous/yaegi v0.6.2
+github.com/containous/yaegi/interp
+github.com/containous/yaegi/stdlib
+# github.com/corpix/uarand v0.1.1
+github.com/corpix/uarand
+# github.com/golang/protobuf v1.3.2
+github.com/golang/protobuf/proto
+# github.com/google/uuid v1.1.1
+github.com/google/uuid
+# github.com/gorilla/css v1.0.0
+github.com/gorilla/css/scanner
+# github.com/gorilla/websocket v1.4.1
+github.com/gorilla/websocket
+# github.com/julienschmidt/httprouter v1.3.0
+github.com/julienschmidt/httprouter
+# github.com/mafredri/cdp v0.24.2
+github.com/mafredri/cdp
+github.com/mafredri/cdp/devtool
+github.com/mafredri/cdp/internal/errors
+github.com/mafredri/cdp/protocol/accessibility
+github.com/mafredri/cdp/protocol/animation
+github.com/mafredri/cdp/protocol/applicationcache
+github.com/mafredri/cdp/protocol/audits
+github.com/mafredri/cdp/protocol/backgroundservice
+github.com/mafredri/cdp/protocol/browser
+github.com/mafredri/cdp/protocol/cachestorage
+github.com/mafredri/cdp/protocol/cast
+github.com/mafredri/cdp/protocol/console
+github.com/mafredri/cdp/protocol/css
+github.com/mafredri/cdp/protocol/database
+github.com/mafredri/cdp/protocol/debugger
+github.com/mafredri/cdp/protocol/deviceorientation
+github.com/mafredri/cdp/protocol/dom
+github.com/mafredri/cdp/protocol/domdebugger
+github.com/mafredri/cdp/protocol/domsnapshot
+github.com/mafredri/cdp/protocol/domstorage
+github.com/mafredri/cdp/protocol/emulation
+github.com/mafredri/cdp/protocol/fetch
+github.com/mafredri/cdp/protocol/headlessexperimental
+github.com/mafredri/cdp/protocol/heapprofiler
+github.com/mafredri/cdp/protocol/indexeddb
+github.com/mafredri/cdp/protocol/input
+github.com/mafredri/cdp/protocol/inspector
+github.com/mafredri/cdp/protocol/internal
+github.com/mafredri/cdp/protocol/io
+github.com/mafredri/cdp/protocol/layertree
+github.com/mafredri/cdp/protocol/log
+github.com/mafredri/cdp/protocol/memory
+github.com/mafredri/cdp/protocol/network
+github.com/mafredri/cdp/protocol/overlay
+github.com/mafredri/cdp/protocol/page
+github.com/mafredri/cdp/protocol/performance
+github.com/mafredri/cdp/protocol/profiler
+github.com/mafredri/cdp/protocol/runtime
+github.com/mafredri/cdp/protocol/schema
+github.com/mafredri/cdp/protocol/security
+github.com/mafredri/cdp/protocol/serviceworker
+github.com/mafredri/cdp/protocol/storage
+github.com/mafredri/cdp/protocol/systeminfo
+github.com/mafredri/cdp/protocol/target
+github.com/mafredri/cdp/protocol/tethering
+github.com/mafredri/cdp/protocol/tracing
+github.com/mafredri/cdp/protocol/webaudio
+github.com/mafredri/cdp/protocol/webauthn
+github.com/mafredri/cdp/rpcc
+github.com/mafredri/cdp/session
+# github.com/mailru/easyjson v0.7.0
+github.com/mailru/easyjson
+github.com/mailru/easyjson/buffer
+github.com/mailru/easyjson/jlexer
+github.com/mailru/easyjson/jwriter
+# github.com/matttproud/golang_protobuf_extensions v1.0.1
+github.com/matttproud/golang_protobuf_extensions/pbutil
+# github.com/oklog/ulid/v2 v2.0.2
+github.com/oklog/ulid/v2
+# github.com/olivere/elastic/v7 v7.0.8
+github.com/olivere/elastic/v7
+github.com/olivere/elastic/v7/config
+github.com/olivere/elastic/v7/uritemplates
+# github.com/pkg/errors v0.8.1
+github.com/pkg/errors
+# github.com/prometheus/client_golang v1.2.1
+github.com/prometheus/client_golang/prometheus
+github.com/prometheus/client_golang/prometheus/internal
+github.com/prometheus/client_golang/prometheus/promauto
+github.com/prometheus/client_golang/prometheus/promhttp
+# github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4
+github.com/prometheus/client_model/go
+# github.com/prometheus/common v0.7.0
+github.com/prometheus/common/expfmt
+github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg
+github.com/prometheus/common/model
+# github.com/prometheus/procfs v0.0.5
+github.com/prometheus/procfs
+github.com/prometheus/procfs/internal/fs
+github.com/prometheus/procfs/internal/util
+# github.com/robfig/cron/v3 v3.0.0
+github.com/robfig/cron/v3
+# github.com/rs/zerolog v1.15.0
+github.com/rs/zerolog
+github.com/rs/zerolog/internal/cbor
+github.com/rs/zerolog/internal/json
+# golang.org/x/net v0.0.0-20191028085509-fe3aa8a45271
+golang.org/x/net/html
+golang.org/x/net/html/atom
+# golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
+golang.org/x/sync/errgroup
+# golang.org/x/sys v0.0.0-20191027211539-f8518d3b3627
+golang.org/x/sys/windows
+# gopkg.in/yaml.v2 v2.2.4
+gopkg.in/yaml.v2
