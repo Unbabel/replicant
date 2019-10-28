@@ -25,7 +25,7 @@ import (
 
 	"github.com/oklog/ulid/v2"
 	"github.com/olivere/elastic/v7"
-	"github.com/brunotm/replicant/replicant/transaction"
+	"github.com/brunotm/replicant/transaction"
 )
 
 type Config struct {

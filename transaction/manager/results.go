@@ -4,7 +4,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/brunotm/replicant/replicant/transaction"
+	"github.com/brunotm/replicant/transaction"
 )
 
 var errNoResultsFound = errors.New("no results found for transaction")

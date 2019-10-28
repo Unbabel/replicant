@@ -19,7 +19,7 @@ package prometheus
 import (
 	"net/http"
 
-	"github.com/brunotm/replicant/replicant/transaction"
+	"github.com/brunotm/replicant/transaction"
 	"github.com/julienschmidt/httprouter"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"

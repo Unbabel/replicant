@@ -25,7 +25,7 @@ import (
 	"sync"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/brunotm/replicant/replicant/transaction/callback"
+	"github.com/brunotm/replicant/transaction/callback"
 )
 
 // Listener implements a replicant callback.Listener for http webhooks

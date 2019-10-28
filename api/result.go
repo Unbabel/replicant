@@ -20,8 +20,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/brunotm/replicant/replicant/server"
-	"github.com/brunotm/replicant/replicant/transaction"
+	"github.com/brunotm/replicant/server"
+	"github.com/brunotm/replicant/transaction"
 )
 
 // GetResult of managed replicant transactions by name

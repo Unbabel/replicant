@@ -1,7 +1,7 @@
 package manager
 
 import (
-	"github.com/brunotm/replicant/replicant/transaction"
+	"github.com/brunotm/replicant/transaction"
 )
 
 // Store for transaction configurations

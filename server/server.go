@@ -24,7 +24,7 @@ import (
 	"time"
 
 	"github.com/brunotm/log"
-	"github.com/brunotm/replicant/replicant/transaction/manager"
+	"github.com/brunotm/replicant/transaction/manager"
 	"github.com/julienschmidt/httprouter"
 )
 

@@ -3,8 +3,8 @@ package memstore
 import (
 	"sync"
 
-	"github.com/brunotm/replicant/replicant/transaction"
-	"github.com/brunotm/replicant/replicant/transaction/manager"
+	"github.com/brunotm/replicant/transaction"
+	"github.com/brunotm/replicant/transaction/manager"
 )
 
 var _ manager.Store = (*Store)(nil)

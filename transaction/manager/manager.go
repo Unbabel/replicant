@@ -21,9 +21,9 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/brunotm/replicant/replicant/internal/scheduler"
-	"github.com/brunotm/replicant/replicant/transaction"
-	"github.com/brunotm/replicant/replicant/transaction/callback"
+	"github.com/brunotm/replicant/internal/scheduler"
+	"github.com/brunotm/replicant/transaction"
+	"github.com/brunotm/replicant/transaction/callback"
 )
 
 // Emitter is the interface for result emitters to external systems

@@ -21,7 +21,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/brunotm/replicant/replicant/server"
+	"github.com/brunotm/replicant/server"
 )
 
 // Result is the api calls result envelope
