@@ -24,8 +24,9 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/julienschmidt/httprouter"
 	"github.com/brunotm/replicant/transaction/callback"
+	"github.com/google/uuid"
+	"github.com/julienschmidt/httprouter"
 )
 
 // Listener implements a replicant callback.Listener for http webhooks
@@ -76,10 +77,16 @@ func New(url, path string, router *httprouter.Router) (l *Listener) {
 }
 
 // Listen creates a handle for webhook based callbacks
-func (l *Listener) Listen(ctx context.Context, id string) (h *callback.Handle, err error) {
+func (l *Listener) Listen(ctx context.Context) (h *callback.Handle, err error) {
 	l.mtx.Lock()
 	defer l.mtx.Unlock()
 
+	uuid, err := uuid.NewRandom()
+	if err != nil {
+		return nil, err
+	}
+
+	id := uuid.String()
 	if _, ok := l.handles[id]; ok {
 		return nil, errors.New("callback for id already exists")
 	}
@@ -114,7 +121,7 @@ func (l *Listener) Listen(ctx context.Context, id string) (h *callback.Handle, e
 		}
 	}()
 
-	return &callback.Handle{Address: address, Response: whandle.resp}, nil
+	return &callback.Handle{ID: id, Address: address, Response: whandle.resp}, nil
 }
 
 type handle struct {

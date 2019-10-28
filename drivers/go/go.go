@@ -26,7 +26,6 @@ import (
 	"github.com/brunotm/replicant/transaction/callback"
 	"github.com/containous/yaegi/interp"
 	"github.com/containous/yaegi/stdlib"
-	"github.com/google/uuid"
 )
 
 const (
@@ -133,6 +132,7 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 	result.Metadata = t.config.Metadata
 
 	var ok bool
+	var err error
 	var listener callback.Listener
 	var handle *callback.Handle
 
@@ -144,14 +144,7 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 			result.Message = "callback not found or does not implement callback.Listener interface"
 		}
 
-		id, err := uuid.NewRandom()
-		if err != nil {
-			result.Failed = true
-			result.Message = fmt.Sprintf("could not generate id for callback: %s", err)
-		}
-
-		handle, err = listener.Listen(ctx, id.String())
-
+		handle, err = listener.Listen(ctx)
 		if err != nil || handle == nil {
 			result.Failed = true
 			result.Message = fmt.Sprintf("could not handle callback: %s", err)

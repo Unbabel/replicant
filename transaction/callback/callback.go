@@ -34,11 +34,12 @@ func init() {
 // Listener listen for async transaction responses.
 // Listeners must be safe for concurrent usage.
 type Listener interface {
-	Listen(ctx context.Context, id string) (handle *Handle, err error)
+	Listen(ctx context.Context) (handle *Handle, err error)
 }
 
 // Handle is a registered async response handle
 type Handle struct {
+	ID       string
 	Address  string
 	Response <-chan Response
 }
