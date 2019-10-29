@@ -11,8 +11,8 @@ import (
 
 	"github.com/brunotm/log"
 	"github.com/brunotm/replicant/api"
-	_ "github.com/brunotm/replicant/drivers/go"
-	_ "github.com/brunotm/replicant/drivers/web"
+	_ "github.com/brunotm/replicant/driver/go"
+	_ "github.com/brunotm/replicant/driver/web"
 	"github.com/brunotm/replicant/emitter/elasticsearch"
 	"github.com/brunotm/replicant/emitter/prometheus"
 	"github.com/brunotm/replicant/emitter/stdout"
