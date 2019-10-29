@@ -31,11 +31,10 @@ import (
 
 // Listener implements a replicant callback.Listener for http webhooks
 type Listener struct {
-	mtx     sync.Mutex
 	path    string
 	url     string
 	router  *httprouter.Router
-	handles map[string]handle
+	handles sync.Map
 }
 
 // New creates a new webhook listener for async callback based responses to replicant transactions
@@ -44,20 +43,17 @@ func New(url, path string, router *httprouter.Router) (l *Listener) {
 	l.url = url
 	l.path = path
 	l.router = router
-	l.handles = make(map[string]handle)
 
 	// The handler access the listener state of open dynamically allocated webhook endpoints
 	router.Handle(http.MethodPost, path+"/:id", func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-		l.mtx.Lock()
-		defer l.mtx.Unlock()
-
 		id := p.ByName("id")
 
-		handle, ok := l.handles[id]
+		h, ok := l.handles.Load(id)
 		if !ok {
 			http.Error(w, "callback for id not found", http.StatusNotFound)
 			return
 		}
+		handle := h.(handle)
 
 		buf, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -67,7 +63,7 @@ func New(url, path string, router *httprouter.Router) (l *Listener) {
 
 		// return response and cleanup resources
 		handle.resp <- callback.Response{Data: buf}
-		delete(l.handles, id)
+		l.handles.Delete(id)
 		close(handle.done)
 		close(handle.resp)
 
@@ -78,8 +74,6 @@ func New(url, path string, router *httprouter.Router) (l *Listener) {
 
 // Listen creates a handle for webhook based callbacks
 func (l *Listener) Listen(ctx context.Context) (h *callback.Handle, err error) {
-	l.mtx.Lock()
-	defer l.mtx.Unlock()
 
 	uuid, err := uuid.NewRandom()
 	if err != nil {
@@ -87,14 +81,14 @@ func (l *Listener) Listen(ctx context.Context) (h *callback.Handle, err error) {
 	}
 
 	id := uuid.String()
-	if _, ok := l.handles[id]; ok {
+	if _, ok := l.handles.Load(id); ok {
 		return nil, errors.New("callback for id already exists")
 	}
 
 	whandle := handle{}
 	whandle.resp = make(chan callback.Response, 1)
 	whandle.done = make(chan struct{})
-	l.handles[id] = whandle
+	l.handles.Store(id, whandle)
 
 	// callback address
 	address := fmt.Sprintf("%s%s/%s", l.url, l.path, id)
@@ -104,12 +98,12 @@ func (l *Listener) Listen(ctx context.Context) (h *callback.Handle, err error) {
 
 		select {
 		case <-ctx.Done():
-			l.mtx.Lock()
-			defer l.mtx.Unlock()
-			if whcb, ok := l.handles[id]; ok {
+
+			if w, ok := l.handles.Load(id); ok {
+				whcb := w.(handle)
 				whcb.resp <- callback.Response{
 					Error: fmt.Errorf("timeout waiting for webhook response on %s", address)}
-				delete(l.handles, id)
+				l.handles.Delete(id)
 				close(whandle.resp)
 				close(whandle.done)
 				return
