@@ -95,7 +95,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 // Close this server
 func (s *Server) Close(ctx context.Context) (err error) {
-	return s.http.Shutdown(ctx)
+	s.http.Shutdown(ctx)
+	return s.manager.Close()
 }
 
 // AddHandler adds a handler for the given method and path
