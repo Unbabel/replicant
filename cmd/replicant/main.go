@@ -18,7 +18,7 @@ import (
 	"github.com/brunotm/replicant/emitter/stdout"
 	"github.com/brunotm/replicant/internal/webhook"
 	"github.com/brunotm/replicant/server"
-	"github.com/brunotm/replicant/store/memstore"
+	"github.com/brunotm/replicant/store/memory"
 	"github.com/brunotm/replicant/transaction/callback"
 )
 
@@ -33,7 +33,7 @@ func main() {
 		config.Addr = "0.0.0.0:8080"
 	}
 
-	srv, err := server.New(config, memstore.New())
+	srv, err := server.New(config, memory.New())
 	if err != nil {
 		log.Error("failed to create replicant server").
 			String("error", err.Error()).Log()

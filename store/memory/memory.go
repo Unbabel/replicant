@@ -1,4 +1,4 @@
-package memstore
+package memory
 
 import (
 	"sync"
@@ -19,10 +19,16 @@ func New() (s *Store) {
 	return &Store{}
 }
 
+// Close the store
+func (s *Store) Close() (err error) {
+	s.data = sync.Map{}
+	return nil
+}
+
 // Has checks if a transaction config exists under the given name
-func (s *Store) Has(name string) (exists bool) {
+func (s *Store) Has(name string) (exists bool, err error) {
 	_, exists = s.data.Load(name)
-	return exists
+	return exists, nil
 }
 
 // Get a transaction config from the store
@@ -45,7 +51,8 @@ func (s *Store) Set(name string, config transaction.Config) (err error) {
 
 // Delete the transaction config for the given name
 func (s *Store) Delete(name string) (err error) {
-	if !s.Has(name) {
+	ok, _ := s.Has(name)
+	if !ok {
 		return transaction.ErrTransactionNotFound
 	}
 	s.data.Delete(name)

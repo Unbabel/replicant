@@ -1,4 +1,4 @@
-package memstore
+package memory
 
 import (
 	"reflect"
@@ -10,11 +10,18 @@ import (
 
 func TestNew(t *testing.T) {
 	s := New()
+	defer cleanStore(t, s)
+
 	c := transaction.Config{}
 	c.Name = "test-txn"
 	s.Set(c.Name, c)
 
-	if !s.Has(c.Name) {
+	ok, err := s.Has(c.Name)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !ok {
 		t.Fatal("new store doesn't store")
 	}
 }
@@ -29,11 +36,18 @@ func TestStore_Has(t *testing.T) {
 		{config: transaction.Config{Name: "txn5"}, wantErr: true},
 	}
 
-	s := initStore(tests)
+	s := initStore(t, tests)
+	defer cleanStore(t, s)
 
 	for _, tt := range tests {
 		t.Run(tt.config.Name, func(t *testing.T) {
-			if gotExists := s.Has(tt.config.Name); gotExists == tt.wantErr {
+
+			gotExists, err := s.Has(tt.config.Name)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if gotExists == tt.wantErr {
 				t.Errorf("Store.Has() = %v, want %v", gotExists, tt.wantErr)
 			}
 		})
@@ -50,7 +64,8 @@ func TestStore_Set_Get(t *testing.T) {
 		{config: transaction.Config{Name: "txn5"}, wantErr: true},
 	}
 
-	s := initStore(tests)
+	s := initStore(t, tests)
+	defer cleanStore(t, s)
 
 	for _, tt := range tests {
 		t.Run(tt.config.Name, func(t *testing.T) {
@@ -78,7 +93,8 @@ func TestStore_Delete(t *testing.T) {
 		{config: transaction.Config{Name: "txn5"}, wantErr: true},
 	}
 
-	s := initStore(tests)
+	s := initStore(t, tests)
+	defer cleanStore(t, s)
 
 	for _, tt := range tests {
 		if !tt.wantErr {
@@ -105,7 +121,8 @@ func TestStore_Iter(t *testing.T) {
 		{config: transaction.Config{Name: "txn5"}, wantErr: false},
 	}
 
-	s := initStore(tests)
+	s := initStore(t, tests)
+	defer cleanStore(t, s)
 
 	for _, tt := range tests {
 		if !tt.wantErr {
@@ -136,7 +153,7 @@ type testCases []struct {
 	wantErr bool
 }
 
-func initStore(tc testCases) *Store {
+func initStore(t *testing.T, tc testCases) *Store {
 	s := New()
 
 	for _, c := range tc {
@@ -146,4 +163,11 @@ func initStore(tc testCases) *Store {
 	}
 
 	return s
+}
+
+func cleanStore(t *testing.T, s *Store) {
+	if err := s.Close(); err != nil {
+		t.Fatal(err)
+	}
+
 }
