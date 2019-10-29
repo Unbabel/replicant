@@ -116,6 +116,20 @@ script: |
   }
 ```
 
+## API
+
+| Method | Resource              | Action                                                  |
+|--------|-----------------------|---------------------------------------------------------|
+| POST   | /v1/transaction       | Add a managed transaction                               |
+| GET    | /v1/transaction       | Get all managed transaction definitions                 |
+| GET    | /v1/transaction/:name | Get a managed transaction definition by name            |
+| DELETE | /v1/transaction/:name | Remove a managed transaction                            |
+| POST   | /v1/run               | Run an ad-hoc transaction                               |
+| POST   | /v1/run/:name         | Run a managed transaction by name                       |
+| GET    | /v1/result            | Get all managed transaction last execution results      |
+| GET    | /v1/result/:name      | Get the latest result for a managed transaction by name |
+| GET    | /metrics              | Get metrics (prometheus emitter must be enabled)        |
+
 ## TODO
 
 * Tests
