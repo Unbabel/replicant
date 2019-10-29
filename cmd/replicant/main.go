@@ -55,6 +55,7 @@ func main() {
 		String("type", "webhook").String("url", callbackURL).Log()
 
 	emitters, _ := os.LookupEnv("EMITTER")
+	setupStdoutEmitter(emitters, srv)
 	setupElasticEmitter(emitters, srv)
 	setupPrometheusEmitter(emitters, srv)
 
