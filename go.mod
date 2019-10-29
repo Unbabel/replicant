@@ -15,6 +15,7 @@ require (
 	github.com/olivere/elastic/v7 v7.0.8
 	github.com/prometheus/client_golang v1.2.1
 	github.com/robfig/cron/v3 v3.0.0
+	github.com/syndtr/goleveldb v1.0.0
 	golang.org/x/net v0.0.0-20191028085509-fe3aa8a45271 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
 	golang.org/x/sys v0.0.0-20191027211539-f8518d3b3627 // indirect

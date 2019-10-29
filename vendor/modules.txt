@@ -47,6 +47,8 @@ github.com/containous/yaegi/stdlib
 github.com/corpix/uarand
 # github.com/golang/protobuf v1.3.2
 github.com/golang/protobuf/proto
+# github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db
+github.com/golang/snappy
 # github.com/google/uuid v1.1.1
 github.com/google/uuid
 # github.com/gorilla/css v1.0.0
@@ -142,6 +144,19 @@ github.com/robfig/cron/v3
 github.com/rs/zerolog
 github.com/rs/zerolog/internal/cbor
 github.com/rs/zerolog/internal/json
+# github.com/syndtr/goleveldb v1.0.0
+github.com/syndtr/goleveldb/leveldb
+github.com/syndtr/goleveldb/leveldb/cache
+github.com/syndtr/goleveldb/leveldb/comparer
+github.com/syndtr/goleveldb/leveldb/errors
+github.com/syndtr/goleveldb/leveldb/filter
+github.com/syndtr/goleveldb/leveldb/iterator
+github.com/syndtr/goleveldb/leveldb/journal
+github.com/syndtr/goleveldb/leveldb/memdb
+github.com/syndtr/goleveldb/leveldb/opt
+github.com/syndtr/goleveldb/leveldb/storage
+github.com/syndtr/goleveldb/leveldb/table
+github.com/syndtr/goleveldb/leveldb/util
 # golang.org/x/net v0.0.0-20191028085509-fe3aa8a45271
 golang.org/x/net/html
 golang.org/x/net/html/atom
