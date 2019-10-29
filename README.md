@@ -1,5 +1,7 @@
 # Replicant
 
+![Replicant](doc/logo.png)
+
 Replicant is a synthetic transaction execution framework named after the bioengineered androids from Blade Runner. (all synthetics came from Blade Runner :)
 
 It defines a common interface for transactions and results, provides a transaction manager, execution scheduler, api and facilities for emitting result data to external systems.
@@ -52,7 +54,6 @@ script: |
     message: "search result",
     data: result,
   }
-
 ```
 
 ### API testing (local development)
@@ -118,9 +119,10 @@ script: |
 ## TODO
 
 * Tests
+* Persistent stores
 * Developer Documentation
 * Architecture and API documentation
-* Javascript transaction support
+* Javascript driver transaction support
 
 ## Related Projects
 
