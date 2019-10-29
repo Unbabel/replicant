@@ -7,8 +7,11 @@ import (
 // Store for transaction configurations
 type Store interface {
 
+	// Close the store
+	Close() (err error)
+
 	// Has checks if a transaction config exists under the given name
-	Has(name string) (exists bool)
+	Has(name string) (exists bool, err error)
 
 	// Get a transaction config from the store
 	Get(name string) (config transaction.Config, err error)
