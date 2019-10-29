@@ -21,6 +21,7 @@ import (
 	"errors"
 	"sync"
 
+	"github.com/brunotm/log"
 	"github.com/brunotm/replicant/internal/scheduler"
 	"github.com/brunotm/replicant/transaction"
 	"github.com/brunotm/replicant/transaction/callback"
@@ -53,12 +54,75 @@ func New(s Store) (manager *Manager) {
 	manager.transactions = s
 	manager.scheduler = scheduler.New()
 	manager.scheduler.Start()
+
+	s.Iter(func(name string, config transaction.Config) (proceed bool) {
+		tx, err := transaction.New(config)
+
+		if err != nil {
+			log.Info("error creating transaction").
+				String("name", name).String("error", err.Error()).Log()
+		}
+
+		manager.schedule(tx)
+		if err != nil {
+			log.Info("error scheduling transaction").
+				String("name", name).String("error", err.Error()).Log()
+		}
+
+		return true
+	})
+
 	return manager
+}
+
+// Close the manager
+func (m *Manager) Close() (err error) {
+	m.scheduler.Stop()
+	return m.transactions.Close()
 }
 
 // New creates a transaction for the given config
 func (m *Manager) New(config transaction.Config) (tx transaction.Transaction, err error) {
 	return transaction.New(config)
+}
+
+func (m *Manager) schedule(tx transaction.Transaction) (err error) {
+	var listener callback.Listener
+	config := tx.Config()
+
+	if config.CallBack != nil {
+		listener, err = callback.GetListener(config.CallBack.Type)
+		if err != nil {
+			return err
+		}
+	}
+
+	return m.scheduler.AddTaskFunc(config.Name, config.Schedule,
+		func() {
+			var result transaction.Result
+
+			for x := 0; x <= config.RetryCount; x++ {
+				ctx := context.Background()
+
+				if config.CallBack != nil {
+					ctx = context.WithValue(ctx, config.CallBack.Type, listener)
+				}
+
+				result = tx.Run(ctx)
+				result.RetryCount = x
+
+				if !result.Failed {
+					break
+				}
+			}
+
+			m.results.Store(config.Name, result)
+
+			for x := 0; x < len(m.emitters); x++ {
+				m.emitters[x].Emit(result)
+			}
+
+		})
 }
 
 // Add adds a replicant transaction to the manager and scheduler if the scheduling
@@ -69,51 +133,19 @@ func (m *Manager) Add(tx transaction.Transaction) (err error) {
 		return errors.New("can't add a nil transaction")
 	}
 
-	if ok := m.transactions.Has(tx.Config().Name); ok {
+	config := tx.Config()
+
+	ok, err := m.transactions.Has(config.Name)
+	if err != nil {
+		return err
+	}
+
+	if ok {
 		return errors.New("transaction already exists")
 	}
 
-	config := tx.Config()
-
-	var listener callback.Listener
-	if config.CallBack != nil {
-		listener, err = callback.GetListener(config.CallBack.Type)
-		if err != nil {
-			return err
-		}
-	}
-
 	if config.Schedule != "" {
-		err = m.scheduler.AddTaskFunc(config.Name, config.Schedule,
-			func() {
-				var result transaction.Result
-
-				for x := 0; x <= config.RetryCount; x++ {
-					ctx := context.Background()
-
-					if config.CallBack != nil {
-						ctx = context.WithValue(ctx, config.CallBack.Type, listener)
-					}
-
-					result = tx.Run(ctx)
-					result.RetryCount = x
-
-					if !result.Failed {
-						break
-					}
-				}
-
-				m.results.Store(config.Name, result)
-
-				if m.emitters != nil {
-					for x := 0; x < len(m.emitters); x++ {
-						m.emitters[x].Emit(result)
-					}
-				}
-
-			})
-
-		if err != nil {
+		if err = m.schedule(tx); err != nil {
 			return err
 		}
 	}
