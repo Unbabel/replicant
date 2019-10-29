@@ -1,6 +1,4 @@
-# Replicant
-
-![Replicant](doc/logo.png)
+# ![Replicant](doc/logo.png)
 
 Replicant is a synthetic transaction execution framework named after the bioengineered androids from Blade Runner. (all synthetics came from Blade Runner :)
 
