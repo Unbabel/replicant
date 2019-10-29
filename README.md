@@ -135,8 +135,10 @@ script: |
 * Tests
 * Persistent stores
 * Developer Documentation
+* Vault integration for secrets (inputs)
 * Architecture and API documentation
 * Javascript driver transaction support
+* Rework prometheus metrics to include summaries
 
 ## Related Projects
 
