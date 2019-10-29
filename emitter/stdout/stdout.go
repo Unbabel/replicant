@@ -24,6 +24,6 @@ import (
 )
 
 func Emitter(result transaction.Result) {
-	buf, _ := json.MarshalIndent(&result, "", "  ")
+	buf, _ := json.Marshal(&result)
 	fmt.Printf("%s", buf)
 }
