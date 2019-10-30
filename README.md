@@ -22,6 +22,7 @@ CALLBACK_URL="https://external.name.net" LISTEN_ADDRESS=localhost:8080 EMITTER=s
 * Start the Chrome browser with Chrome DevTools Protocol enabled:
 `/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222 &`
 
+#### Test definition (can be also in json format)
 ```yaml
 POST http://127.0.0.1:8080/v1/run
 content-type: application/yaml
@@ -54,8 +55,33 @@ script: |
   }
 ```
 
+#### Response
+```json
+{
+  "data": [
+    {
+      "name": "duckduckgo-search",
+      "type": "web",
+      "failed": false,
+      "message": "search result",
+      "data": "A blade runner must pursue and terminate four replicants who stole a ship in space, and have returned to Earth to find their creator.",
+      "time": "2019-10-30T06:18:20.511246Z",
+      "metadata": {
+        "application": "web-search",
+        "component": "web",
+        "environment": "production"
+      },
+      "retry_count": 0,
+      "with_callback": false,
+      "duration_seconds": 5.242629701
+    }
+  ]
+}
+```
+
 ### API testing (local development)
 
+#### Test definition (can be also in json format)
 ```yaml
 POST http://127.0.0.1:8080/v1/run
 content-type: application/yaml
@@ -112,6 +138,30 @@ script: |
     }
     return "search result", fmt.Sprintf("%s", s[1]), nil
   }
+```
+
+#### Response
+```json
+{
+  "data": [
+    {
+      "name": "duckduckgo-search",
+      "type": "go",
+      "failed": false,
+      "message": "search result",
+      "data": "Blade Runner A 1982 American neo-noir science fiction film directed by Ridley Scott, written by Hampton...",
+      "time": "2019-10-30T06:10:12.835481Z",
+      "metadata": {
+        "application": "api-search",
+        "component": "api",
+        "environment": "production"
+      },
+      "retry_count": 0,
+      "with_callback": false,
+      "duration_seconds": 0.602482443
+    }
+  ]
+}
 ```
 
 ## API
