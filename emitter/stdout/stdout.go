@@ -23,7 +23,28 @@ import (
 	"github.com/brunotm/replicant/transaction"
 )
 
-func Emitter(result transaction.Result) {
-	buf, _ := json.Marshal(&result)
-	fmt.Printf("%s", buf)
+// Config options
+type Config struct {
+	Pretty bool `json:"pretty" yaml:"pretty"`
+}
+
+type Emitter struct {
+	config Config
+}
+
+func New(c Config) (e *Emitter) {
+	return &Emitter{config: c}
+}
+
+func (e *Emitter) Emit(result transaction.Result) {
+	var buf []byte
+
+	switch e.config.Pretty {
+	case false:
+		buf, _ = json.Marshal(&result)
+	case true:
+		buf, _ = json.MarshalIndent(&result, "", "  ")
+	}
+
+	fmt.Printf("%s\n", buf)
 }

@@ -23,19 +23,19 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/brunotm/replicant/transaction"
 	"github.com/oklog/ulid/v2"
 	"github.com/olivere/elastic/v7"
-	"github.com/brunotm/replicant/transaction"
 )
 
 type Config struct {
-	Username          string
-	Password          string
-	Urls              []string
-	Index             string
-	MaxPendingBytes   int64
-	MaxPendingResults int64
-	MaxPendingTime    time.Duration
+	Username          string        `json:"username" yaml:"username"`
+	Password          string        `json:"password" yaml:"password"`
+	Urls              []string      `json:"urls" yaml:"urls"`
+	Index             string        `json:"index" yaml:"index"`
+	MaxPendingBytes   int64         `json:"max_pending_bytes" yaml:"max_pending_bytes"`
+	MaxPendingResults int64         `json:"max_pending_results" yaml:"max_pending_results"`
+	MaxPendingTime    time.Duration `json:"max_pending_time" yaml:"max_pending_time"`
 }
 
 // Emitter for elasticsearch
