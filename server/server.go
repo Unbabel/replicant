@@ -30,10 +30,10 @@ import (
 
 // Config for replicant server
 type Config struct {
-	Addr              string
-	WriteTimeout      time.Duration
-	ReadTimeout       time.Duration
-	ReadHeaderTimeout time.Duration
+	ListenAddress     string        `json:"listen_address" yaml:"listen_address"`
+	WriteTimeout      time.Duration `json:"write_timeout" yaml:"write_timeout"`
+	ReadTimeout       time.Duration `json:"read_timeout" yaml:"read_timeout"`
+	ReadHeaderTimeout time.Duration `json:"read_header_timeout" yaml:"read_header_timeout"`
 }
 
 // Server is an replicant manager and api server
@@ -50,7 +50,7 @@ func New(config Config, s manager.Store) (server *Server, err error) {
 	server.config = config
 	server.router = httprouter.New()
 	server.http = &http.Server{}
-	server.http.Addr = config.Addr
+	server.http.Addr = config.ListenAddress
 
 	if config.WriteTimeout != 0 {
 		server.http.WriteTimeout = config.WriteTimeout
@@ -146,11 +146,34 @@ func recovery(h Handle) (n Handle) {
 func logger(h Handle) (n Handle) {
 	return func(w http.ResponseWriter, r *http.Request, p Params) {
 		start := time.Now()
-		h(w, r, p)
+		sw := &statusWriter{ResponseWriter: w}
+		h(sw, r, p)
 		log.Info("api request").String("method", r.Method).
 			String("uri", r.URL.String()).
 			String("requester", r.RemoteAddr).
+			Int("status", int64(sw.status)).
+			Int("content_length", int64(sw.length)).
 			Int("duration_ms", time.Since(start).Milliseconds()).
 			Log()
 	}
+}
+
+type statusWriter struct {
+	http.ResponseWriter
+	status int
+	length int
+}
+
+func (w *statusWriter) WriteHeader(status int) {
+	w.status = status
+	w.ResponseWriter.WriteHeader(status)
+}
+
+func (w *statusWriter) Write(b []byte) (int, error) {
+	if w.status == 0 {
+		w.status = 200
+	}
+	n, err := w.ResponseWriter.Write(b)
+	w.length += n
+	return n, err
 }
