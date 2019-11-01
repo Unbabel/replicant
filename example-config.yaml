@@ -3,7 +3,7 @@ log_level: INFO
 api_prefix: /api
 # store_uri  driver:arguments, currently supported leveldb:path and memory:-
 # defaults to memory:-
-store_uri: leveldb:/data/replicantdb
+store_uri: memory:-
 server:
   listen_address: 0.0.0.0:8080
   write_timeout: 10m
