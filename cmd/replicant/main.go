@@ -2,12 +2,10 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
-	"strconv"
-	"strings"
-	"time"
 
 	"github.com/brunotm/log"
 	"github.com/brunotm/replicant/api"
@@ -18,56 +16,112 @@ import (
 	"github.com/brunotm/replicant/emitter/stdout"
 	"github.com/brunotm/replicant/internal/webhook"
 	"github.com/brunotm/replicant/server"
-	"github.com/brunotm/replicant/store/memory"
+	"github.com/brunotm/replicant/store"
+	_ "github.com/brunotm/replicant/store/leveldb"
+	_ "github.com/brunotm/replicant/store/memory"
 	"github.com/brunotm/replicant/transaction/callback"
+	"github.com/brunotm/replicant/transaction/manager"
+)
+
+var (
+	defaultConfigFile = "replicant.yaml"
+	writeConfig       = flag.Bool("write", false, "write default configuration")
+	configFile        = flag.String("config", "", "replicant configuration file")
 )
 
 // bloody and dirty
 func main() {
+	flag.Parse()
 
-	var ok bool
 	var err error
+	cfg := DefaultConfig
 
-	config := server.Config{}
-	if config.Addr, ok = os.LookupEnv("LISTEN_ADDRESS"); !ok {
-		config.Addr = "0.0.0.0:8080"
+	if *writeConfig {
+		if *configFile != "" {
+			defaultConfigFile = *configFile
+		}
+
+		err = writeConfigFile(cfg, defaultConfigFile)
+		if err != nil {
+			log.Error("could not write config file").
+				String("file", defaultConfigFile).
+				String("error", err.Error()).Log()
+			os.Exit(1)
+		}
+
+		os.Exit(0)
 	}
 
-	srv, err := server.New(config, memory.New())
+	if *configFile != "" {
+		cfg, err = readConfigFile(*configFile)
+		if err != nil {
+			log.Error("could not read config file").
+				String("file", defaultConfigFile).
+				String("error", err.Error()).Log()
+			os.Exit(1)
+		}
+	}
+
+	var st manager.Store
+	if cfg.StoreURI == "" {
+		cfg.StoreURI = "memory:-"
+	}
+
+	log.Info("initializing store").String("uri", cfg.StoreURI).Log()
+	st, err = store.New(cfg.StoreURI)
+	if err != nil {
+		log.Error("could not initialize store").
+			String("error", err.Error()).Log()
+		os.Exit(1)
+	}
+
+	srv, err := server.New(cfg.Server, st)
 	if err != nil {
 		log.Error("failed to create replicant server").
 			String("error", err.Error()).Log()
 		os.Exit(1)
 	}
 
-	callbackURL, ok := os.LookupEnv("CALLBACK_URL")
-	if !ok {
-		callbackURL = fmt.Sprintf("http://%s", config.Addr)
-	}
-
-	err = callback.Register("webhook", webhook.New(callbackURL, "/v1/callbacks", srv.Router()))
+	err = callback.Register("webhook", webhook.New(cfg.Callbacks.Webhook, srv.Router()))
 	if err != nil {
 		log.Error("failed to register webhook response handler").
 			String("error", err.Error()).Log()
 		os.Exit(1)
 	}
 	log.Info("registered response handler").
-		String("type", "webhook").String("url", callbackURL).Log()
+		String("type", "webhook").
+		String("advertise_url",
+			fmt.Sprintf("%s%s", cfg.Callbacks.Webhook.AdvertiseURL, cfg.Callbacks.Webhook.PathPrefix)).Log()
 
-	emitters, _ := os.LookupEnv("EMITTER")
-	setupStdoutEmitter(emitters, srv)
-	setupElasticEmitter(emitters, srv)
-	setupPrometheusEmitter(emitters, srv)
+	var e manager.Emitter
+	srv.Manager().AddEmitter(stdout.New(cfg.Emitters.Stdout))
 
-	prefix, _ := os.LookupEnv("API_PREFIX")
-	api.AddAllRoutes(prefix, srv)
+	e, err = prometheus.New(cfg.Emitters.Prometheus, srv.Router())
+	if err != nil {
+		log.Error("failed to create prometheus emitter").
+			String("error", err.Error()).Log()
+		os.Exit(1)
+	}
+	srv.Manager().AddEmitter(e)
+
+	if len(cfg.Emitters.Elasticsearch.Urls) > 0 && cfg.Emitters.Elasticsearch.Index != "" {
+		e, err = elasticsearch.New(cfg.Emitters.Elasticsearch)
+		if err != nil {
+			log.Error("failed to create prometheus emitter").
+				String("error", err.Error()).Log()
+			os.Exit(1)
+		}
+		srv.Manager().AddEmitter(e)
+	}
+
+	api.AddAllRoutes(cfg.APIPrefix, srv)
 	go srv.Start()
 
 	signalCh := make(chan os.Signal, 1)
 	signal.Notify(signalCh, os.Interrupt)
 
 	log.Info("replicant server started").
-		String("address", config.Addr).Log()
+		String("address", cfg.Server.ListenAddress).Log()
 	<-signalCh
 
 	if err = srv.Close(context.Background()); err != nil {
@@ -77,80 +131,4 @@ func main() {
 
 	log.Info("replicant server stopped").Log()
 
-}
-
-func setupStdoutEmitter(e string, s *server.Server) {
-	if !strings.Contains(e, "stdout") {
-		return
-	}
-	s.Manager().AddEmitterFunc(stdout.Emitter)
-}
-
-func setupPrometheusEmitter(e string, s *server.Server) {
-	if !strings.Contains(e, "prometheus") {
-		return
-	}
-
-	em, err := prometheus.New("/metrics", s.Router())
-	if err != nil {
-		log.Error("failed to initialize prometheus emitter").
-			String("error", err.Error()).Log()
-		os.Exit(1)
-	}
-	s.Manager().AddEmitter(em)
-}
-
-func setupElasticEmitter(e string, s *server.Server) {
-
-	if !strings.Contains(e, "elasticsearch") {
-		return
-	}
-
-	var err error
-	var cfg elasticsearch.Config
-
-	if urls, ok := os.LookupEnv("ELASTICSEARCH_URLS"); ok {
-		cfg.Urls = strings.Split(urls, ",")
-	}
-
-	cfg.Username, _ = os.LookupEnv("ELASTICSEARCH_USERNAME")
-	cfg.Password, _ = os.LookupEnv("ELASTICSEARCH_PASSWORD")
-	cfg.Index, _ = os.LookupEnv("ELASTICSEARCH_INDEX")
-	cfg.Username, _ = os.LookupEnv("ELASTICSEARCH_USERNAME")
-
-	if mxpb, ok := os.LookupEnv("ELASTICSEARCH_MAX_PENDING_BYTES"); ok {
-		cfg.MaxPendingBytes, err = strconv.ParseInt(mxpb, 10, 64)
-		if err != nil {
-			log.Error("failed to parse ELASTICSEARCH_MAX_PENDING_BYTES").
-				String("error", err.Error()).Log()
-			os.Exit(1)
-		}
-	}
-
-	if mxpr, ok := os.LookupEnv("ELASTICSEARCH_MAX_PENDING_RESULTS"); ok {
-		cfg.MaxPendingBytes, err = strconv.ParseInt(mxpr, 10, 64)
-		if err != nil {
-			log.Error("failed to parse ELASTICSEARCH_MAX_PENDING_RESULTS").
-				String("error", err.Error()).Log()
-			os.Exit(1)
-		}
-	}
-
-	if mxpp, ok := os.LookupEnv("ELASTICSEARCH_MAX_PENDING_TIME"); ok {
-		cfg.MaxPendingTime, err = time.ParseDuration(mxpp)
-		if err != nil {
-			log.Error("failed to parse ELASTICSEARCH_MAX_PENDING_TIME").
-				String("error", err.Error()).Log()
-			os.Exit(1)
-		}
-	}
-
-	em, err := elasticsearch.New(cfg)
-	if err != nil {
-		log.Error("failed to initialize elasticsearch emitter").
-			String("error", err.Error()).Log()
-		os.Exit(1)
-	}
-
-	s.Manager().AddEmitter(em)
 }
