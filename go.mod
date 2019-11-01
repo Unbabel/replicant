@@ -10,6 +10,7 @@ require (
 	github.com/containous/yaegi v0.6.2
 	github.com/google/uuid v1.1.1
 	github.com/julienschmidt/httprouter v1.3.0
+	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mailru/easyjson v0.7.0 // indirect
 	github.com/oklog/ulid/v2 v2.0.2
 	github.com/olivere/elastic/v7 v7.0.8
