@@ -4,27 +4,33 @@ Replicant is a synthetic transaction execution framework named after the bioengi
 
 It defines a common interface for transactions and results, provides a transaction manager, execution scheduler, api and facilities for emitting result data to external systems.
 
+## Status
+
+***This replicant is still at a very young age, and under heavy development.***
+
 ## Requirements
 
 * Go 1.13
-* External URL for API tests that require webhook based callbaks
+* External URL for API tests that require webhook based callbacks
 * Chrome with remote debugging (CDP) either in headless mode or in foreground (useful for testing)
 
 ## Examples
 
-Running the server
+Running the server with the [example config](/example-config.yaml) from the project root dir.
 ```bash
-CALLBACK_URL="https://external.name.net" LISTEN_ADDRESS=localhost:8080 EMITTER=stdout,prometheus go run cmd/replicant/main.go
+go run cmd/replicant/*.go -config $PWD/example-config.yaml
 ```
 
 ### Web application testing (local development)
+
+* The web application testing support is based on the FQL (Ferret Query Language), [documentation](https://github.com/MontFerret/ferret).
 
 * Start the Chrome browser with Chrome DevTools Protocol enabled:
 `/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222 &`
 
 #### Test definition (can be also in json format)
 ```yaml
-POST http://127.0.0.1:8080/v1/run
+POST http://127.0.0.1:8080/api/v1/run
 content-type: application/yaml
 
 name: duckduckgo-search
@@ -39,7 +45,7 @@ inputs:
   timeout: 5000000
   text: "blade runner"
 metadata:
-  application: web-search
+  application: duckduckgo-search
   environment: production
   component: web
 script: |
@@ -67,7 +73,7 @@ script: |
       "data": "A blade runner must pursue and terminate four replicants who stole a ship in space, and have returned to Earth to find their creator.",
       "time": "2019-10-30T06:18:20.511246Z",
       "metadata": {
-        "application": "web-search",
+        "application": "duckduckgo-search",
         "component": "web",
         "environment": "production"
       },
@@ -81,21 +87,23 @@ script: |
 
 ### API testing (local development)
 
+* The api testing support is based on interpreted go code, [documentation](https://github.com/containous/yaegi).
+
 #### Test definition (can be also in json format)
 ```yaml
-POST http://127.0.0.1:8080/v1/run
+POST http://127.0.0.1:8080/api/v1/run
 content-type: application/yaml
 
 name: duckduckgo-search
 type: go
-schedule: '@every 1m'
+schedule: '@every 20s'
 timeout: 200s
 retry_count: 2
 inputs:
   url: "https://api.duckduckgo.com/"
   text: "blade runner"
 metadata:
-  application: api-search
+  application: duckduckgo-search
   environment: production
   component: api
 script: |
@@ -152,7 +160,7 @@ script: |
       "data": "Blade Runner A 1982 American neo-noir science fiction film directed by Ridley Scott, written by Hampton...",
       "time": "2019-10-30T06:10:12.835481Z",
       "metadata": {
-        "application": "api-search",
+        "application": "duckduckgo-search",
         "component": "api",
         "environment": "production"
       },
@@ -181,12 +189,11 @@ script: |
 ## TODO
 
 * Tests
-* Persistent stores
-* Developer Documentation
+* Developer and user documentation
+* Add support for more conventional persistent stores
 * Vault integration for secrets (inputs)
 * Architecture and API documentation
 * Javascript driver transaction support
-* Rework prometheus metrics to include summaries
 
 ## Related Projects
 
