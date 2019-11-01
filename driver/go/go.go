@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	// Type of replicant driver
+	// Type of driver
 	Type = "go"
 )
 

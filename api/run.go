@@ -22,9 +22,9 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/brunotm/replicant/server"
 	"github.com/brunotm/replicant/transaction"
 	"github.com/brunotm/replicant/transaction/callback"
-	"github.com/brunotm/replicant/server"
 	"gopkg.in/yaml.v2"
 )
 

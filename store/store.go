@@ -12,8 +12,10 @@ var (
 	registry = sync.Map{}
 )
 
+// Supplier for manager.Store
 type Supplier func(uri string) (s manager.Store, err error)
 
+// Register registers store suppliers
 func Register(name string, s Supplier) (err error) {
 	if _, ok := registry.Load(name); ok {
 		return fmt.Errorf("store: %s already registered", name)
@@ -22,6 +24,8 @@ func Register(name string, s Supplier) (err error) {
 	return nil
 }
 
+// New creates a new store with the registered suppliers from the given URI.
+// URI spec: <store>:<arguments>
 func New(uri string) (s manager.Store, err error) {
 	params := strings.SplitN(uri, ":", 2)
 	if len(params) == 0 {

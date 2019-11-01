@@ -34,7 +34,7 @@ type Task interface {
 	Run()
 }
 
-// TaskFunc
+// TaskFunc is a scheduler task
 type TaskFunc func()
 
 // Run implements Task interface

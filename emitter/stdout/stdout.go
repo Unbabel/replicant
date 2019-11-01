@@ -23,19 +23,22 @@ import (
 	"github.com/brunotm/replicant/transaction"
 )
 
-// Config options
+// Config options for stdout emitter
 type Config struct {
 	Pretty bool `json:"pretty" yaml:"pretty"`
 }
 
+// Emitter stdout
 type Emitter struct {
 	config Config
 }
 
+// New creates a new emitter
 func New(c Config) (e *Emitter) {
 	return &Emitter{config: c}
 }
 
+// Emit results
 func (e *Emitter) Emit(result transaction.Result) {
 	var buf []byte
 

@@ -28,6 +28,7 @@ import (
 	"github.com/olivere/elastic/v7"
 )
 
+// Config for elasticsearch emitter
 type Config struct {
 	Username          string        `json:"username" yaml:"username"`
 	Password          string        `json:"password" yaml:"password"`
