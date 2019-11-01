@@ -3,11 +3,19 @@ package memory
 import (
 	"sync"
 
+	"github.com/brunotm/replicant/store"
 	"github.com/brunotm/replicant/transaction"
 	"github.com/brunotm/replicant/transaction/manager"
 )
 
 var _ manager.Store = (*Store)(nil)
+
+func init() {
+	store.Register("memory",
+		func(uri string) (s manager.Store, err error) {
+			return New(uri)
+		})
+}
 
 // Store is a in memory transaction config store
 type Store struct {
@@ -15,8 +23,8 @@ type Store struct {
 }
 
 // New creates a new in memory transaction config store
-func New() (s *Store) {
-	return &Store{}
+func New(_ string) (s *Store, err error) {
+	return &Store{}, nil
 }
 
 // Close the store

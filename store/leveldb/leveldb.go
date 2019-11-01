@@ -2,7 +2,10 @@ package leveldb
 
 import (
 	"encoding/json"
+	"fmt"
+	"strings"
 
+	"github.com/brunotm/replicant/store"
 	"github.com/brunotm/replicant/transaction"
 	"github.com/brunotm/replicant/transaction/manager"
 	"github.com/syndtr/goleveldb/leveldb"
@@ -10,14 +13,27 @@ import (
 
 var _ manager.Store = (*Store)(nil)
 
+func init() {
+	store.Register("leveldb",
+		func(uri string) (s manager.Store, err error) {
+			return New(uri)
+		})
+}
+
 // Store is a in memory transaction config store
 type Store struct {
 	data *leveldb.DB
 }
 
 // New creates a new in memory transaction config store
-func New(path string) (s *Store, err error) {
+func New(uri string) (s *Store, err error) {
 	s = &Store{}
+
+	params := strings.SplitN(uri, ":", 2)
+	if len(params) == 0 {
+		return nil, fmt.Errorf("store: invalid uri %s", uri)
+	}
+	path := params[1]
 
 	s.data, err = leveldb.OpenFile(path, nil)
 	if err != nil {

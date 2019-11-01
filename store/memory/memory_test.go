@@ -9,7 +9,7 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	s := New()
+	s := New("")
 	defer cleanStore(t, s)
 
 	c := transaction.Config{}
@@ -154,7 +154,7 @@ type testCases []struct {
 }
 
 func initStore(t *testing.T, tc testCases) *Store {
-	s := New()
+	s := New("")
 
 	for _, c := range tc {
 		if !c.wantErr {
