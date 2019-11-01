@@ -31,21 +31,27 @@ import (
 
 // Listener implements a replicant callback.Listener for http webhooks
 type Listener struct {
-	path    string
+	prefix  string
 	url     string
 	router  *httprouter.Router
 	handles sync.Map
 }
 
+// Config options
+type Config struct {
+	AdvertiseURL string `json:"advertise_url" yaml:"advertise_url"`
+	PathPrefix   string `json:"path_prefix" yaml:"path_prefix"`
+}
+
 // New creates a new webhook listener for async callback based responses to replicant transactions
-func New(url, path string, router *httprouter.Router) (l *Listener) {
+func New(c Config, router *httprouter.Router) (l *Listener) {
 	l = &Listener{}
-	l.url = url
-	l.path = path
+	l.url = c.AdvertiseURL
+	l.prefix = c.PathPrefix
 	l.router = router
 
 	// The handler access the listener state of open dynamically allocated webhook endpoints
-	router.Handle(http.MethodPost, path+"/:id", func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	router.Handle(http.MethodPost, l.prefix+"/:id", func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		id := p.ByName("id")
 
 		h, ok := l.handles.Load(id)
@@ -91,7 +97,7 @@ func (l *Listener) Listen(ctx context.Context) (h *callback.Handle, err error) {
 	l.handles.Store(id, whandle)
 
 	// callback address
-	address := fmt.Sprintf("%s%s/%s", l.url, l.path, id)
+	address := fmt.Sprintf("%s%s/%s", l.url, l.prefix, id)
 
 	// Each registered webhook has a monitor goroutine for cancellation
 	go func() {
