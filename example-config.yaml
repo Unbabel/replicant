@@ -1,0 +1,37 @@
+log_level: INFO
+# api_prefix to prefix all base api calls, defaults to ""
+api_prefix: /api
+# store_uri  driver:arguments, currently supported leveldb:path and memory:-
+# defaults to memory:-
+store_uri: leveldb:/data/replicantdb
+server:
+  listen_address: 0.0.0.0:8080
+  write_timeout: 10m
+  read_timeout: 10m
+  read_header_timeout: 10m
+callbacks:
+  webhook:
+    # base url to advertise when listening to callbacks
+    advertise_url: https://external.url.com
+    # path_prefix to prefix all generated callbacks
+    path_prefix: /callback
+emitters:
+  stdout:
+    # pretty print json
+    pretty: false
+  prometheus:
+    path: /metrics
+    labels:
+      - application
+      - component
+      - environment
+    gauges: true
+    summaries: true
+  elasticsearch:
+    username: ""
+    password: ""
+    urls: []
+    index: ""
+    max_pending_bytes: 0
+    max_pending_results: 0
+    max_pending_time: 0s
