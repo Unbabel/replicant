@@ -1,4 +1,5 @@
 # ![Replicant](doc/logo.png)
+[![Go Report Card](https://goreportcard.com/badge/github.com/brunotm/replicant)](https://goreportcard.com/report/github.com/brunotm/replicant)
 
 Replicant is a synthetic transaction execution framework named after the bioengineered androids from Blade Runner. (all synthetics came from Blade Runner :)
 

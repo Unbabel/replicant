@@ -9,10 +9,10 @@ import (
 	"github.com/brunotm/replicant/transaction"
 )
 
-var path = "/tmp/testdb"
+var uri = "leveldb:/tmp/testdb"
 
 func TestNew(t *testing.T) {
-	s, err := New(path)
+	s, err := New(uri)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -141,6 +141,7 @@ func TestStore_Iter(t *testing.T) {
 	cb := func(n string, c transaction.Config) bool {
 		if (n != "") && (n == c.Name) {
 			atomic.AddInt32(&counter, 1)
+			t.Log(n)
 		}
 		return true
 	}
@@ -160,7 +161,7 @@ type testCases []struct {
 }
 
 func initStore(t *testing.T, tc testCases) *Store {
-	s, err := New(path)
+	s, err := New(uri + t.Name())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -175,11 +176,12 @@ func initStore(t *testing.T, tc testCases) *Store {
 }
 
 func cleanStore(t *testing.T, s *Store) {
+
 	if err := s.Close(); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := os.RemoveAll(path); err != nil {
+	if err := os.RemoveAll(uri); err != nil {
 		t.Fatal(err)
 	}
 }
