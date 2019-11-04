@@ -61,6 +61,7 @@ func New(s Store) (manager *Manager) {
 		if err != nil {
 			log.Info("error creating transaction").
 				String("name", name).String("error", err.Error()).Log()
+			return true
 		}
 
 		manager.schedule(tx)
