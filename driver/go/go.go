@@ -159,7 +159,7 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 
 	if err != nil {
 		result.Error = err
-		result.Message = err.Error()
+		result.Message = m
 		result.Failed = true
 		return result
 	}
@@ -177,7 +177,7 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 
 	if resp.Error != nil {
 		result.Error = err
-		result.Message = resp.Error.Error()
+		result.Data = string(resp.Data)
 		result.Failed = true
 		return result
 	}
