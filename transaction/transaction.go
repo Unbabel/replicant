@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"sync"
 	"text/template"
-	"time"
 )
 
 var (
@@ -100,30 +99,15 @@ type CallBackConfig struct {
 	Script string `json:"script" yaml:"script"`
 }
 
-// Result represents a transaction execution result
-type Result struct {
-	Name            string            `json:"name" yaml:"name"`
-	Type            string            `json:"type" yaml:"type"`
-	Failed          bool              `json:"failed" yaml:"failed"`
-	Message         string            `json:"message" yaml:"message"`
-	Data            string            `json:"data" yaml:"data"`
-	Time            time.Time         `json:"time" yaml:"time"`
-	Error           error             `json:"-" yaml:"-"`
-	Metadata        map[string]string `json:"metadata" yaml:"metadata"`
-	RetryCount      int               `json:"retry_count" yaml:"retry_count"`
-	WithCallback    bool              `json:"with_callback" yaml:"with_callback"`
-	DurationSeconds float64           `json:"duration_seconds" yaml:"duration_seconds"`
-}
-
 func parseTemplate(config Config) (c Config, err error) {
 
-	tmpl, err := template.New(config.Name).Parse(config.Script)
+	tpl, err := template.New(config.Name).Parse(config.Script)
 	if err != nil {
 		return config, err
 	}
 
 	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, config.Inputs)
+	err = tpl.Execute(&buf, config.Inputs)
 	if err != nil {
 		return config, err
 	}
