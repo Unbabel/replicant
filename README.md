@@ -186,6 +186,8 @@ script: |
 | GET    | /v1/result            | Get all managed transaction last execution results      |
 | GET    | /v1/result/:name      | Get the latest result for a managed transaction by name |
 | GET    | /metrics              | Get metrics (prometheus emitter must be enabled)        |
+| GET    | /debug/pprof          | Get available runtime profile data index                |
+| GET    | /debug/pprof/:profile | Get profile data (profile information for pprof)        |
 
 ## TODO
 

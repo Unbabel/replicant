@@ -1,3 +1,5 @@
+# debug activates serving profiling data via the /debug/pprof endpoint
+debug: false
 log_level: INFO
 # api_prefix to prefix all base api calls, defaults to ""
 api_prefix: /api
