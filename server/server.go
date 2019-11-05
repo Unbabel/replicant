@@ -100,27 +100,28 @@ func (s *Server) Close(ctx context.Context) (err error) {
 }
 
 // AddHandler adds a handler for the given method and path
-func (s *Server) AddHandler(method, path string, handler Handle) {
+func (s *Server) AddHandler(method, path string, handler Handler) {
+	log.Info("adding handler").String("path", path).String("method", method).Log()
 	s.router.Handle(method, path, logger(recovery(handler)))
 }
 
 // AddServerHandler adds a handler for the given method and path
-func (s *Server) AddServerHandler(method, path string, handler Handler) {
+func (s *Server) AddServerHandler(method, path string, handler ServerHandler) {
 	log.Info("adding handler").String("path", path).String("method", method).Log()
 	s.router.Handle(method, path, logger(recovery(handler(s))))
 }
 
-// Handler is handler that has access to the server
-type Handler func(*Server) httprouter.Handle
+// ServerHandler is handler that has access to the server
+type ServerHandler func(*Server) httprouter.Handle
 
-// Handle is a http handler
-type Handle = httprouter.Handle
+// Handler is a http handler
+type Handler = httprouter.Handle
 
 // Params from the URL
 type Params = httprouter.Params
 
 // recovery middleware
-func recovery(h Handle) (n Handle) {
+func recovery(h Handler) (n Handler) {
 	return func(w http.ResponseWriter, r *http.Request, p Params) {
 
 		defer func() {
@@ -143,7 +144,7 @@ func recovery(h Handle) (n Handle) {
 }
 
 // logger middleware
-func logger(h Handle) (n Handle) {
+func logger(h Handler) (n Handler) {
 	return func(w http.ResponseWriter, r *http.Request, p Params) {
 		start := time.Now()
 		sw := &statusWriter{ResponseWriter: w}

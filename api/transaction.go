@@ -28,7 +28,7 @@ import (
 )
 
 // AddTransaction to the replicant manager
-func AddTransaction(srv *server.Server) (handle server.Handle) {
+func AddTransaction(srv *server.Server) (handle server.Handler) {
 	return func(w http.ResponseWriter, r *http.Request, p server.Params) {
 		defer r.Body.Close()
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -80,7 +80,7 @@ func AddTransaction(srv *server.Server) (handle server.Handle) {
 }
 
 // GetTransaction fetches a named transaction definition from the replicant manager
-func GetTransaction(srv *server.Server) (handle server.Handle) {
+func GetTransaction(srv *server.Server) (handle server.Handler) {
 	return func(w http.ResponseWriter, r *http.Request, p server.Params) {
 		defer r.Body.Close()
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -108,7 +108,7 @@ func GetTransaction(srv *server.Server) (handle server.Handle) {
 }
 
 // GetTransactions fetches all transaction definition from the replicant manager
-func GetTransactions(srv *server.Server) (handle server.Handle) {
+func GetTransactions(srv *server.Server) (handle server.Handler) {
 	return func(w http.ResponseWriter, r *http.Request, p server.Params) {
 		defer r.Body.Close()
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -127,7 +127,7 @@ func GetTransactions(srv *server.Server) (handle server.Handle) {
 }
 
 // RemoveTransaction removes a named transaction from the replicant manager
-func RemoveTransaction(srv *server.Server) (handle server.Handle) {
+func RemoveTransaction(srv *server.Server) (handle server.Handler) {
 	return func(w http.ResponseWriter, r *http.Request, p server.Params) {
 		defer r.Body.Close()
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")

@@ -29,7 +29,7 @@ import (
 )
 
 // RunTransaction runs a unmanaged ad-hoc transaction
-func RunTransaction(srv *server.Server) (handle server.Handle) {
+func RunTransaction(srv *server.Server) (handle server.Handler) {
 	return func(w http.ResponseWriter, r *http.Request, p server.Params) {
 		defer r.Body.Close()
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -89,7 +89,7 @@ func RunTransaction(srv *server.Server) (handle server.Handle) {
 }
 
 // RunTransactionByName runs a managed ad-hoc transaction
-func RunTransactionByName(srv *server.Server) (handle server.Handle) {
+func RunTransactionByName(srv *server.Server) (handle server.Handler) {
 	return func(w http.ResponseWriter, r *http.Request, p server.Params) {
 		defer r.Body.Close()
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")

@@ -25,7 +25,7 @@ import (
 )
 
 // GetResult of managed replicant transactions by name
-func GetResult(srv *server.Server) (handle server.Handle) {
+func GetResult(srv *server.Server) (handle server.Handler) {
 	return func(w http.ResponseWriter, r *http.Request, p server.Params) {
 		defer r.Body.Close()
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -52,7 +52,7 @@ func GetResult(srv *server.Server) (handle server.Handle) {
 }
 
 // GetResults of all managed replicant transactions
-func GetResults(srv *server.Server) (handle server.Handle) {
+func GetResults(srv *server.Server) (handle server.Handler) {
 	return func(w http.ResponseWriter, r *http.Request, p server.Params) {
 		defer r.Body.Close()
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
