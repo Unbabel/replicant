@@ -114,6 +114,11 @@ func main() {
 		srv.Manager().AddEmitter(e)
 	}
 
+	if cfg.Debug {
+		log.Info("adding debug api routes for runtime profiling data").Log()
+		api.AddDebugRoutes(srv)
+	}
+
 	api.AddAllRoutes(cfg.APIPrefix, srv)
 	go srv.Start()
 

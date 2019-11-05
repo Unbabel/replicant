@@ -45,6 +45,7 @@ func AddAllRoutes(prefix string, server *server.Server) {
 	server.AddServerHandler(http.MethodGet, prefix+`/v1/result/:name`, GetResult)
 }
 
+// httpError wraps http status codes and error messages as json reponses
 func httpError(w http.ResponseWriter, err error, code int) {
 	var result Result
 	result.Error = err.Error()
@@ -52,4 +53,18 @@ func httpError(w http.ResponseWriter, err error, code int) {
 
 	w.WriteHeader(code)
 	w.Write(res)
+}
+
+// wrapHTTPHandler from net/http for usage with the server package
+func wrapHTTPHandler(h http.Handler) (handle server.Handler) {
+	return func(w http.ResponseWriter, r *http.Request, _ server.Params) {
+		h.ServeHTTP(w, r)
+	}
+}
+
+// wrapHTTPHandlerFunc from net/http for usage with the server package
+func wrapHTTPHandlerFunc(h http.HandlerFunc) (handle server.Handler) {
+	return func(w http.ResponseWriter, r *http.Request, _ server.Params) {
+		h(w, r)
+	}
 }

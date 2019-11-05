@@ -15,6 +15,7 @@ import (
 
 // Config for replicant
 type Config struct {
+	Debug     bool           `json:"debug" yaml:"debug"`
 	LogLevel  string         `json:"log_level" yaml:"log_level"`
 	APIPrefix string         `json:"api_prefix" yaml:"api_prefix"`
 	StoreURI  string         `json:"store_path" yaml:"store_uri"`
