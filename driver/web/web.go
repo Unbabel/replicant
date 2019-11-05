@@ -111,7 +111,6 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 
 	if err != nil {
 		result.Error = err
-		result.Message = err.Error()
 		result.Failed = true
 	}
 
@@ -122,7 +121,7 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 	}
 
 	if err = json.Unmarshal(r, &result); err != nil {
-		result.Error = fmt.Errorf("%s, %s", result.Error, err)
+		result.Error = fmt.Errorf("errors: %s, %s", result.Error, err)
 		result.Data = string(r)
 	}
 
