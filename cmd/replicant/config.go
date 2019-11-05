@@ -57,10 +57,11 @@ var DefaultConfig = Config{
 	Emitters: EmitterConfig{
 		Stdout: stdout.Config{Pretty: false},
 		Prometheus: prometheus.Config{
-			Path:      "/metrics",
-			Gauges:    true,
-			Summaries: true,
-			Labels:    []string{"application", "environment", "component"},
+			Path:              "/metrics",
+			Gauges:            true,
+			Summaries:         true,
+			Labels:            []string{"application", "environment", "component"},
+			SummaryObjectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 		},
 
 		Elasticsearch: elasticsearch.Config{},

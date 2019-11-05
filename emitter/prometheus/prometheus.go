@@ -44,10 +44,11 @@ type Emitter struct {
 
 // Config options
 type Config struct {
-	Path      string   `json:"path" yaml:"path"`
-	Labels    []string `json:"labels" yaml:"labels"`
-	Gauges    bool     `json:"gauges" yaml:"gauges"`
-	Summaries bool     `json:"summaries" yaml:"summaries"`
+	Path              string              `json:"path" yaml:"path"`
+	Labels            []string            `json:"labels" yaml:"labels"`
+	Gauges            bool                `json:"gauges" yaml:"gauges"`
+	Summaries         bool                `json:"summaries" yaml:"summaries"`
+	SummaryObjectives map[float64]float64 `json:"summary_objectives" yaml:"summary_objectives"`
 }
 
 // Close and flush pending data
@@ -138,7 +139,7 @@ func New(c Config, router *httprouter.Router) (emitter *Emitter, err error) {
 			Subsystem:  "summary",
 			Name:       "state",
 			Help:       "transaction result state",
-			Objectives: map[float64]float64{0.25: 0.025, 0.5: 0.05, 0.75: 0.075, 0.9: 0.01, 0.99: 0.001}},
+			Objectives: c.SummaryObjectives},
 			c.Labels)
 
 		emitter.retriesSummary = promauto.NewSummaryVec(prometheus.SummaryOpts{
@@ -146,7 +147,7 @@ func New(c Config, router *httprouter.Router) (emitter *Emitter, err error) {
 			Subsystem:  "summary",
 			Name:       "retries",
 			Help:       "transaction retries",
-			Objectives: map[float64]float64{0.25: 0.025, 0.5: 0.05, 0.75: 0.075, 0.9: 0.01, 0.99: 0.001}},
+			Objectives: c.SummaryObjectives},
 			c.Labels)
 
 		emitter.latencySummary = promauto.NewSummaryVec(prometheus.SummaryOpts{
@@ -154,7 +155,7 @@ func New(c Config, router *httprouter.Router) (emitter *Emitter, err error) {
 			Subsystem:  "summary",
 			Name:       "latency",
 			Help:       "transaction latencies",
-			Objectives: map[float64]float64{0.25: 0.025, 0.5: 0.05, 0.75: 0.075, 0.9: 0.01, 0.99: 0.001}},
+			Objectives: c.SummaryObjectives},
 			c.Labels)
 	}
 

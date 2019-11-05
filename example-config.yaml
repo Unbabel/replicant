@@ -29,6 +29,10 @@ emitters:
       - environment
     gauges: true
     summaries: true
+    summary_objectives:
+      0.5: 0.05
+      0.9: 0.01
+      0.99: 0.001
   elasticsearch:
     username: ""
     password: ""
