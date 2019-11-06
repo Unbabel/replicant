@@ -1,5 +1,7 @@
-# ![Replicant](doc/logo.png)
-[![Go Report Card](https://goreportcard.com/badge/github.com/brunotm/replicant)](https://goreportcard.com/report/github.com/brunotm/replicant)
+# ![Replicant](https://raw.githubusercontent.com/brunotm/replicant/master/doc/logo.png)
+[![Go Report Card](https://goreportcard.com/badge/github.com/brunotm/replicant?style=flat-square)](https://goreportcard.com/report/github.com/brunotm/replicant)
+[![GoDoc](https://img.shields.io/badge/api-reference-blue.svg?style=flat-square)](https://godoc.org/github.com/brunotm/replicant)
+[![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/brunotm/replicant?style=flat-square)](https://hub.docker.com/r/brunotm/replicant)
 
 Replicant is a synthetic transaction execution framework named after the bioengineered androids from Blade Runner. (all synthetics came from Blade Runner :)
 
@@ -7,7 +9,7 @@ It defines a common interface for transactions and results, provides a transacti
 
 ## Status
 
-***This replicant is still at a very young age, and under heavy development.***
+***Under heavy development and API changes are expected. Please file an issue if anything breaks.***
 
 ## Requirements
 
@@ -17,7 +19,7 @@ It defines a common interface for transactions and results, provides a transacti
 
 ## Examples
 
-Running the server with the [example config](/example-config.yaml) from the project root dir.
+Running the server with the [example config](https://github.com/brunotm/replicant/blob/master/example-config.yaml) from the project root dir.
 ```bash
 go run cmd/replicant/*.go -config $PWD/example-config.yaml
 ```
@@ -186,8 +188,8 @@ script: |
 | GET    | /v1/result            | Get all managed transaction last execution results      |
 | GET    | /v1/result/:name      | Get the latest result for a managed transaction by name |
 | GET    | /metrics              | Get metrics (prometheus emitter must be enabled)        |
-| GET    | /debug/pprof          | Get available runtime profile data index                |
-| GET    | /debug/pprof/:profile | Get profile data (profile information for pprof)        |
+| GET    | /debug/pprof          | Get available runtime profile data (debug enabled)      |
+| GET    | /debug/pprof/:profile | Get profile data (for pprof, debug enabled)             |
 
 ## TODO
 
@@ -207,4 +209,4 @@ script: |
 Bruno Moura [brunotm@gmail.com](mailto:brunotm@gmail.com)
 
 ## License
-Replicant source code is available under the Apache Version 2.0 [License](/LICENSE)
+Replicant source code is available under the Apache Version 2.0 [License](https://github.com/brunotm/replicant/blob/master/LICENSE)
