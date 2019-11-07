@@ -50,7 +50,7 @@ var DefaultConfig = Config{
 	Callbacks: CallbackConfig{
 		Webhook: webhook.Config{
 			AdvertiseURL: "http://0.0.0.0:8080",
-			PathPrefix:   "/callback",
+			PathPrefix:   "/api/callback",
 		},
 	},
 
