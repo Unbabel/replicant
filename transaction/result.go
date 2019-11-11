@@ -64,7 +64,7 @@ func (r *Result) UnmarshalJSON(data []byte) error {
 		alias: (*alias)(r),
 	}
 
-	if err := json.Unmarshal(data, &aux); err != nil {
+	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
 
