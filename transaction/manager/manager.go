@@ -70,6 +70,10 @@ func New(s Store) (manager *Manager) {
 				String("name", name).String("error", err.Error()).Log()
 		}
 
+		log.Info("configured stored transaction").
+			String("name", name).String("type", config.Type).
+			String("schedule", config.Schedule).Log()
+
 		return true
 	})
 
