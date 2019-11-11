@@ -56,7 +56,7 @@ func main() {
 		cfg, err = readConfigFile(*configFile)
 		if err != nil {
 			log.Error("could not read config file").
-				String("file", defaultConfigFile).
+				String("file", *configFile).
 				String("error", err.Error()).Log()
 			os.Exit(1)
 		}

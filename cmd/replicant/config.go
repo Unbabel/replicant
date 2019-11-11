@@ -60,7 +60,7 @@ var DefaultConfig = Config{
 			Path:              "/metrics",
 			Gauges:            true,
 			Summaries:         true,
-			Labels:            []string{"application", "environment", "component"},
+			Labels:            []string{"transaction", "application", "environment", "component"},
 			SummaryObjectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 		},
 
