@@ -64,13 +64,13 @@ func New(s Store) (manager *Manager) {
 			return true
 		}
 
-		manager.schedule(tx)
-		if err != nil {
+		if err = manager.schedule(tx); err != nil {
 			log.Info("error scheduling transaction").
 				String("name", name).String("error", err.Error()).Log()
+			return true
 		}
 
-		log.Info("configured stored transaction").
+		log.Info("added stored transaction").
 			String("name", name).String("type", config.Type).
 			String("schedule", config.Schedule).Log()
 
