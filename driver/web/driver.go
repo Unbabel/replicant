@@ -17,113 +17,78 @@ package web
 */
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/MontFerret/ferret/pkg/compiler"
-	"github.com/MontFerret/ferret/pkg/drivers"
-	"github.com/MontFerret/ferret/pkg/drivers/cdp"
-	"github.com/MontFerret/ferret/pkg/runtime"
-	"github.com/MontFerret/ferret/pkg/runtime/logging"
 	"github.com/brunotm/replicant/transaction"
 )
 
-const (
-	// Type of driver
-	Type = "web"
-)
-
-func init() {
-	transaction.Register(
-		Type,
-		func(config transaction.Config) (tx transaction.Transaction, err error) {
-			return New(config)
-		})
+// Driver for web based transactions using the chrome developer protocol
+type Driver struct {
+	config Config
 }
 
-// Transaction is a pre-compiled replicant transaction for web applications
-type Transaction struct {
-	config  transaction.Config
-	server  string
-	timeout time.Duration
-	program *runtime.Program
+// Config for web driver
+type Config struct {
+	// Server URL for the chrome developer protocol to be used for tests
+	// can be overridden by the "cdp_server_url" in the transaction config inputs
+	ServerURL string `json:"server_url" yaml:"server_url"`
+
+	// Perform DNS discovery with the server hostname
+	// The web driver needs to maintain the same cpd server across multiple http
+	// requests. This needed when using multiple cdp servers that are load balanced
+	// by DNS round robin, like a kubernetes headless service.
+	DNSDiscovery bool `json:"dns_discovery" yaml:"dns_discovery"`
+}
+
+// New creates a new web driver
+func New(c Config) (d *Driver) {
+	return &Driver{c}
+}
+
+// Type returns this driver type
+func (d *Driver) Type() (t string) {
+	return "web"
 }
 
 // New creates a web transaction
-func New(config transaction.Config) (tx *Transaction, err error) {
-	tx = &Transaction{}
+func (d *Driver) New(config transaction.Config) (tx transaction.Transaction, err error) {
+	txn := &Transaction{}
 
+	serverURL := d.config.ServerURL
 	s, ok := config.Inputs["cdp_address"]
-	if !ok {
-		return nil, fmt.Errorf("cdp_address not specified in inputs")
+	if ok {
+		serverURL, ok = s.(string)
+		if !ok {
+			return nil, fmt.Errorf("unexpected value for cdp_address: %#v", s)
+		}
 	}
 
-	server, ok := s.(string)
-	if !ok {
-		return nil, fmt.Errorf("unexpected value for cdp_address")
+	if serverURL == "" {
+		return nil, fmt.Errorf("no default server and no input cpd_server specified")
 	}
 
-	tx.server = server
+	txn.server, err = url.Parse(serverURL)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse server URL: %w", err)
+	}
 
 	if config.Timeout != "" {
-		tx.timeout, err = time.ParseDuration(config.Timeout)
+		txn.timeout, err = time.ParseDuration(config.Timeout)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	tx.program, err = compiler.New().Compile(config.Script)
+	txn.dnsDiscovery = d.config.DNSDiscovery
+
+	txn.program, err = compiler.New().Compile(config.Script)
 	if err != nil {
 		return nil, err
 	}
 
-	tx.config = config
+	txn.config = config
 	return tx, nil
-}
-
-// Config returns the transaction config
-func (t *Transaction) Config() (config transaction.Config) {
-	return t.config
-}
-
-// Run executes the web transaction
-func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
-
-	if t.timeout > 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, t.timeout)
-		defer cancel()
-	}
-
-	ctx = drivers.WithContext(
-		ctx, cdp.NewDriver(cdp.WithAddress(t.server)),
-		drivers.AsDefault())
-
-	result.Name = t.config.Name
-	result.Type = "web"
-	result.Time = time.Now()
-
-	// runtime.WithLog runtime.WithLogFields runtime.WithLogLevel
-	r, err := t.program.Run(ctx, runtime.WithLogLevel(logging.ErrorLevel))
-	result.DurationSeconds = time.Since(result.Time).Seconds()
-
-	if err != nil {
-		result.Error = err
-		result.Failed = true
-	}
-
-	result.Metadata = t.config.Metadata
-
-	if len(r) == 0 {
-		return result
-	}
-
-	if err = json.Unmarshal(r, &result); err != nil {
-		result.Error = fmt.Errorf("errors: %s, %s", result.Error, err)
-		result.Data = string(r)
-	}
-
-	return result
 }
