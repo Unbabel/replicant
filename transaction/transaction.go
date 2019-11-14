@@ -17,62 +17,8 @@ package transaction
 */
 
 import (
-	"bytes"
 	"context"
-	"errors"
-	"fmt"
-	"sync"
-	"text/template"
 )
-
-var (
-	// ErrInvalidType invalid transaction type
-	ErrInvalidType = errors.New("invalid transaction type")
-	// ErrTransactionNotFound transaction not found
-	ErrTransactionNotFound = errors.New("transaction not found")
-
-	suppliers    map[string]Supplier
-	suppliersMtx sync.RWMutex
-)
-
-func init() {
-	suppliers = make(map[string]Supplier)
-}
-
-// Register suppliers for transaction types
-func Register(typ string, supplier Supplier) (err error) {
-	suppliersMtx.Lock()
-	defer suppliersMtx.Unlock()
-
-	if _, ok := suppliers[typ]; ok {
-		return fmt.Errorf("duplicate supplier for type %s", typ)
-	}
-
-	suppliers[typ] = supplier
-	return nil
-}
-
-// New creates a transaction from a config
-func New(config Config) (tx Transaction, err error) {
-	suppliersMtx.RLock()
-	supplier, ok := suppliers[config.Type]
-	suppliersMtx.RUnlock()
-
-	if !ok {
-		return nil, ErrInvalidType
-	}
-
-	if config.Inputs != nil {
-		if config, err = parseTemplate(config); err != nil {
-			return nil, err
-		}
-	}
-
-	return supplier(config)
-}
-
-// Supplier is a Transaction Supplier
-type Supplier func(Config) (Transaction, error)
 
 // Transaction is a test executor. It can be run many times.
 type Transaction interface {
@@ -83,7 +29,7 @@ type Transaction interface {
 // Config is a synthetic test definition
 type Config struct {
 	Name       string                 `json:"name" yaml:"name"`
-	Type       string                 `json:"type" yaml:"type"`
+	Driver     string                 `json:"driver" yaml:"driver"`
 	Schedule   string                 `json:"schedule" yaml:"schedule"`
 	Timeout    string                 `json:"timeout" yaml:"timeout"`
 	RetryCount int                    `json:"retry_count" yaml:"retry_count"`
@@ -97,22 +43,4 @@ type Config struct {
 type CallBackConfig struct {
 	Type   string `json:"type" yaml:"type"`
 	Script string `json:"script" yaml:"script"`
-}
-
-func parseTemplate(config Config) (c Config, err error) {
-
-	tpl, err := template.New(config.Name).Parse(config.Script)
-	if err != nil {
-		return config, err
-	}
-
-	var buf bytes.Buffer
-	err = tpl.Execute(&buf, config.Inputs)
-	if err != nil {
-		return config, err
-	}
-
-	config.Script = buf.String()
-	return config, nil
-
 }
