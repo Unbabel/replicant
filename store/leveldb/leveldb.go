@@ -59,7 +59,7 @@ func (s *Store) Get(name string) (config transaction.Config, err error) {
 
 	switch {
 	case err == leveldb.ErrNotFound:
-		return config, transaction.ErrTransactionNotFound
+		return config, store.ErrTransactionNotFound
 	case err != nil:
 		return config, err
 	}
@@ -92,7 +92,7 @@ func (s *Store) Delete(name string) (err error) {
 	}
 
 	if !ok {
-		return transaction.ErrTransactionNotFound
+		return store.ErrTransactionNotFound
 	}
 
 	return s.data.Delete([]byte(name), nil)

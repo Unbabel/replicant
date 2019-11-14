@@ -43,7 +43,7 @@ func (s *Store) Has(name string) (exists bool, err error) {
 func (s *Store) Get(name string) (config transaction.Config, err error) {
 	c, exists := s.data.Load(name)
 	if !exists {
-		return config, transaction.ErrTransactionNotFound
+		return config, store.ErrTransactionNotFound
 	}
 
 	config = c.(transaction.Config)
@@ -61,7 +61,7 @@ func (s *Store) Set(name string, config transaction.Config) (err error) {
 func (s *Store) Delete(name string) (err error) {
 	ok, _ := s.Has(name)
 	if !ok {
-		return transaction.ErrTransactionNotFound
+		return store.ErrTransactionNotFound
 	}
 	s.data.Delete(name)
 	return nil
