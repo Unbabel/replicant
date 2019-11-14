@@ -58,7 +58,7 @@ func RunTransaction(srv *server.Server) (handle server.Handler) {
 			}
 		}
 
-		tx, err := transaction.New(config)
+		tx, err := srv.Manager().New(config)
 		if err != nil {
 			httpError(w, err, http.StatusInternalServerError)
 			return
