@@ -9,8 +9,8 @@ import (
 
 	"github.com/brunotm/log"
 	"github.com/brunotm/replicant/api"
-	_ "github.com/brunotm/replicant/driver/go"
-	_ "github.com/brunotm/replicant/driver/web"
+	goDriver "github.com/brunotm/replicant/driver/go"
+	webDriver "github.com/brunotm/replicant/driver/web"
 	"github.com/brunotm/replicant/emitter/elasticsearch"
 	"github.com/brunotm/replicant/emitter/prometheus"
 	"github.com/brunotm/replicant/emitter/stdout"
@@ -56,7 +56,7 @@ func main() {
 		cfg, err = readConfigFile(*configFile)
 		if err != nil {
 			log.Error("could not read config file").
-				String("file", *configFile).
+				String("path", *configFile).
 				String("error", err.Error()).Log()
 			os.Exit(1)
 		}
@@ -75,7 +75,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	srv, err := server.New(cfg.Server, st)
+	m := manager.New(st, goDriver.New(), webDriver.New(cfg.Drivers.Web))
+
+	srv, err := server.New(cfg.Server, m)
 	if err != nil {
 		log.Error("failed to create replicant server").
 			String("error", err.Error()).Log()
