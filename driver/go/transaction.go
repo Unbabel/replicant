@@ -18,28 +18,12 @@ package web
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/brunotm/replicant/transaction"
 	"github.com/brunotm/replicant/transaction/callback"
-	"github.com/containous/yaegi/interp"
-	"github.com/containous/yaegi/stdlib"
 )
-
-const (
-	// Type of driver
-	Type = "go"
-)
-
-func init() {
-	transaction.Register(
-		Type,
-		func(config transaction.Config) (tx transaction.Transaction, err error) {
-			return New(config)
-		})
-}
 
 // TxFunc is the Run function signature which will be called from the provided go code.
 // Package name must be transaction, "transaction.Run".
@@ -57,63 +41,6 @@ type Transaction struct {
 	callbackHandler CallBackHandler
 }
 
-// New creates a web transaction
-func New(config transaction.Config) (tx *Transaction, err error) {
-	tx = &Transaction{}
-
-	if config.Timeout != "" {
-		tx.timeout, err = time.ParseDuration(config.Timeout)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	i := interp.New(interp.Options{})
-	i.Use(stdlib.Symbols)
-
-	_, err = i.Eval(config.Script)
-	if err != nil {
-		return nil, err
-	}
-
-	v, err := i.Eval("transaction.Run")
-	if err != nil {
-		return nil, err
-	}
-
-	var ok bool
-	tx.transaction, ok = v.Interface().(func(context.Context) (message, data string, err error))
-	if !ok || tx.transaction == nil {
-		return nil, errors.New(
-			`transaction.Run doesn't implement "TxFunc" signature`)
-	}
-
-	if config.CallBack != nil {
-		i := interp.New(interp.Options{})
-		i.Use(stdlib.Symbols)
-
-		_, err = i.Eval(config.CallBack.Script)
-		if err != nil {
-			return nil, err
-		}
-
-		var ok bool
-		v, err := i.Eval("callback.Handle")
-		if err != nil {
-			return nil, err
-		}
-
-		tx.callbackHandler, ok = v.Interface().(func(context.Context, []byte) (message, data string, err error))
-		if !ok {
-			return nil, errors.New(
-				`callback.Handle doesn't implement "CallBackHandler" signature`)
-		}
-	}
-
-	tx.config = config
-	return tx, nil
-}
-
 // Config returns the transaction config
 func (t *Transaction) Config() (config transaction.Config) {
 	return t.config
@@ -128,7 +55,7 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 	}
 
 	result.Name = t.config.Name
-	result.Type = Type
+	result.Driver = "go"
 	result.Metadata = t.config.Metadata
 
 	var ok bool
