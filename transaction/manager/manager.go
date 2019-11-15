@@ -21,9 +21,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"html/template"
 	"math/rand"
 	"sync"
+	"text/template"
 	"time"
 
 	"github.com/brunotm/log"
