@@ -22,13 +22,16 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"math/rand"
 	"sync"
+	"time"
 
 	"github.com/brunotm/log"
 	"github.com/brunotm/replicant/driver"
 	"github.com/brunotm/replicant/internal/scheduler"
 	"github.com/brunotm/replicant/transaction"
 	"github.com/brunotm/replicant/transaction/callback"
+	"github.com/oklog/ulid/v2"
 )
 
 // Emitter is the interface for result emitters to external systems
@@ -47,6 +50,7 @@ func (e EmitterFunc) Emit(result transaction.Result) { e(result) }
 type Manager struct {
 	mtx          sync.Mutex
 	emitters     []Emitter
+	uuidEntropy  *ulid.MonotonicEntropy
 	scheduler    *scheduler.Scheduler
 	transactions Store
 	drivers      sync.Map
@@ -57,6 +61,7 @@ type Manager struct {
 func New(s Store, d ...driver.Driver) (manager *Manager) {
 	manager = &Manager{}
 	manager.transactions = s
+	manager.uuidEntropy = ulid.Monotonic(rand.New(rand.NewSource(time.Now().UnixNano())), 0)
 	manager.scheduler = scheduler.New()
 	manager.scheduler.Start()
 
@@ -129,11 +134,15 @@ func (m *Manager) schedule(tx transaction.Transaction) (err error) {
 
 	return m.scheduler.AddTaskFunc(config.Name, config.Schedule,
 		func() {
+			var uuid string
 			var result transaction.Result
 
 			for x := 0; x <= config.RetryCount; x++ {
-				ctx := context.Background()
 
+				u, _ := ulid.New(ulid.Timestamp(time.Now()), m.uuidEntropy)
+				uuid = u.String()
+
+				ctx := context.WithValue(context.Background(), "transaction_uuid", uuid)
 				if config.CallBack != nil {
 					ctx = context.WithValue(ctx, config.CallBack.Type, listener)
 				}
@@ -146,6 +155,7 @@ func (m *Manager) schedule(tx transaction.Transaction) (err error) {
 				}
 			}
 
+			result.UUID = uuid
 			m.results.Store(config.Name, result)
 
 			for x := 0; x < len(m.emitters); x++ {
