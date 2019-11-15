@@ -58,23 +58,22 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 	result.Driver = "go"
 	result.Metadata = t.config.Metadata
 
-	var ok bool
 	var err error
-	var listener callback.Listener
 	var handle *callback.Handle
 
 	// If dealing with async responses for this transaction, we must first get a Listener and Handle
 	if t.config.CallBack != nil {
-		listener, ok = ctx.Value(t.config.CallBack.Type).(callback.Listener)
-		if !ok || listener == nil {
+		listener, ok := ctx.Value(t.config.CallBack.Type).(callback.Listener)
+		if !ok {
 			result.Failed = true
 			result.Message = "callback not found or does not implement callback.Listener interface"
 		}
 
 		handle, err = listener.Listen(ctx)
-		if err != nil || handle == nil {
+		if err != nil {
 			result.Failed = true
 			result.Message = fmt.Sprintf("could not handle callback: %s", err)
+			return result
 		}
 
 		ctx = context.WithValue(ctx, "callback_address", handle.Address)
