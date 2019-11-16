@@ -69,20 +69,23 @@ script: |
 {
   "data": [
     {
-      "name": "duckduckgo-search",
-      "type": "web",
-      "failed": false,
-      "message": "search result",
-      "data": "A blade runner must pursue and terminate four replicants who stole a ship in space, and have returned to Earth to find their creator.",
-      "time": "2019-10-30T06:18:20.511246Z",
+      "uuid": "01DSSR5GH2BPX4G5FFCEVPEBKK",
+      "name": "duckduckgo-web-search",
+      "driver": "web",
+      "failed": true,
+      "message": "",
+      "data": "",
+      "time": "2019-11-16T09:19:39.554976Z",
       "metadata": {
-        "application": "duckduckgo-search",
-        "component": "web",
-        "environment": "production"
+        "application": "duckduckgo",
+        "component": "website",
+        "environment": "production",
+        "transaction": "website-search"
       },
       "retry_count": 0,
       "with_callback": false,
-      "duration_seconds": 5.242629701
+      "duration_seconds": 6.967938203,
+      "error": "operation timed out: WAIT_NAVIGATION(doc) at 4:0"
     }
   ]
 }
@@ -157,20 +160,23 @@ script: |
 {
   "data": [
     {
-      "name": "duckduckgo-search",
-      "type": "go",
+      "uuid": "01DSSR7ST5Q1Y2Y7HDSQDNS7Y7",
+      "name": "duckduckgo-api-search",
+      "driver": "go",
       "failed": false,
       "message": "search result",
       "data": "Blade Runner A 1982 American neo-noir science fiction film directed by Ridley Scott, written by Hampton...",
-      "time": "2019-10-30T06:10:12.835481Z",
+      "time": "2019-11-16T09:20:54.597852Z",
       "metadata": {
-        "application": "duckduckgo-search",
+        "application": "duckduckgo",
         "component": "api",
-        "environment": "production"
+        "environment": "production",
+        "transaction": "api-search"
       },
       "retry_count": 0,
       "with_callback": false,
-      "duration_seconds": 0.602482443
+      "duration_seconds": 0.486582328,
+      "error": ""
     }
   ]
 }
