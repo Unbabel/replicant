@@ -90,5 +90,5 @@ func (d *Driver) New(config transaction.Config) (tx transaction.Transaction, err
 	}
 
 	txn.config = config
-	return tx, nil
+	return txn, nil
 }
