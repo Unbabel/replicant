@@ -47,6 +47,7 @@ type CallbackConfig struct {
 var DefaultConfig = Config{
 	LogLevel:  "INFO",
 	APIPrefix: "/api",
+	StoreURI:  "memory:-",
 	Server: server.Config{
 		ListenAddress:     "0.0.0.0:8080",
 		WriteTimeout:      time.Second * 600,

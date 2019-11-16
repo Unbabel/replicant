@@ -1,43 +1,41 @@
-# debug activates serving profiling data via the /debug/pprof endpoint
-debug: false
-log_level: INFO
-# api_prefix to prefix all base api calls, defaults to ""
-api_prefix: /api
-# store_uri  driver:arguments, currently supported leveldb:path and memory:-
-# defaults to memory:-
-store_uri: memory:-
+debug: false                                  # Register server profiling endpoints
+log_level: INFO                               # Log level
+api_prefix: /api                              # API prefix for the api endpoints
+store_uri: "memory:-"                         # Store connection string
 server:
-  listen_address: 0.0.0.0:8080
-  write_timeout: 10m
-  read_timeout: 10m
-  read_header_timeout: 10m
-callbacks:
-  webhook:
-    # base url to advertise when listening to callbacks
-    advertise_url: https://external.url.com
-    # path_prefix to prefix all generated callbacks
-    path_prefix: /callback
+  listen_address: 0.0.0.0:8080                # Address to listen on
+  write_timeout: 10m0s                        # API write timeout
+  read_timeout: 10m0s                         # Read timeout
+  read_header_timeout: 10m0s                  # Header read timeout
+drivers:
+  web:
+    server_url: http://127.0.0.1:9222         # URL of the CDP server for web application transactions, can by overridden by the cdp_address in transaction inputs
+    dns_discovery: true                       # Discover servers IP address from DNS
 emitters:
-  stdout:
-    # pretty print json
-    pretty: false
+  stdout:                                     # Emit results to standard output in JSON format
+    pretty: false                             # Pretty printing of JSON results
   prometheus:
-    path: /metrics
-    labels:
-      - application
-      - component
-      - environment
-    gauges: true
-    summaries: true
-    summary_objectives:
+    path: /metrics                            # Path for prometheus endpoint
+    labels:                                   # Prometheus metrics labels, must be specified in transactions metadata
+    - transaction
+    - application
+    - environment
+    - component
+    gauges: true                              # Record gauges
+    summaries: true                           # Record summaries
+    summary_objectives:                       # Summary objectives to record
       0.5: 0.05
       0.9: 0.01
       0.99: 0.001
-  elasticsearch:
-    username: ""
-    password: ""
-    urls: []
-    index: ""
-    max_pending_bytes: 0
-    max_pending_results: 0
-    max_pending_time: 0s
+  elasticsearch:                              # Emit result data for elasticsearch
+    username: ""                              # Elasticsearch username
+    password: ""                              # Elasticsearch password
+    urls: []                                  # Elasticsearch nodes URL
+    index: ""                                 # Elasticsearch index to write to
+    max_pending_bytes: 0                      # Maximum number of pending bytes to buffer before sending data
+    max_pending_results: 0                    # Maximum number of pending results to buffer before sending data
+    max_pending_time: 0s                      # Maximum time to buffer before sending data
+callbacks:
+  webhook:                                    # Listen for asynchronous transaction responses via webhooks
+    advertise_url: http://0.0.0.0:8080        # External URL to advertise for webhooks
+    path_prefix: /api/callback                # Path prefix for webhooks, transaction uid will be appended to it
