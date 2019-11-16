@@ -49,8 +49,6 @@ github.com/corpix/uarand
 github.com/golang/protobuf/proto
 # github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db
 github.com/golang/snappy
-# github.com/google/uuid v1.1.1
-github.com/google/uuid
 # github.com/gorilla/css v1.0.0
 github.com/gorilla/css/scanner
 # github.com/gorilla/websocket v1.4.1
@@ -115,6 +113,8 @@ github.com/mailru/easyjson/jlexer
 github.com/mailru/easyjson/jwriter
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 github.com/matttproud/golang_protobuf_extensions/pbutil
+# github.com/oklog/ulid v1.3.1
+github.com/oklog/ulid
 # github.com/oklog/ulid/v2 v2.0.2
 github.com/oklog/ulid/v2
 # github.com/olivere/elastic/v7 v7.0.8
