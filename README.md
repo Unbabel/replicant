@@ -36,21 +36,21 @@ go run cmd/replicant/*.go -config $PWD/example-config.yaml
 POST http://127.0.0.1:8080/api/v1/run
 content-type: application/yaml
 
-name: duckduckgo-search
-type: web
-schedule: '@every 1m'
-timeout: 200s
+name: duckduckgo-web-search
+driver: web
+schedule: '@every 60s'
+timeout: 50s
 retry_count: 2
 inputs:
   url: "https://duckduckgo.com"
-  cdp_address: "http://127.0.0.1:9222"
   user_agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 Safari/537.36"
   timeout: 5000000
   text: "blade runner"
 metadata:
-  application: duckduckgo-search
+  transaction: website-search
+  application: duckduckgo
   environment: production
-  component: web
+  component: website
 script: |
   LET doc = DOCUMENT('{{ index . "url" }}', { driver: "cdp", userAgent: "{{ index . "user_agent" }}"})
   INPUT(doc, '#search_form_input_homepage', "{{ index . "text" }}")
@@ -97,16 +97,17 @@ script: |
 POST http://127.0.0.1:8080/api/v1/run
 content-type: application/yaml
 
-name: duckduckgo-search
-type: go
-schedule: '@every 20s'
-timeout: 200s
+name: duckduckgo-api-search
+driver: go
+schedule: '@every 60s'
+timeout: 60s
 retry_count: 2
 inputs:
   url: "https://api.duckduckgo.com/"
   text: "blade runner"
 metadata:
-  application: duckduckgo-search
+  transaction: api-search
+  application: duckduckgo
   environment: production
   component: api
 script: |
@@ -145,7 +146,7 @@ script: |
     }
     s := rx.FindSubmatch(buf)
     if len(s) < 2 {
-      return "failed to find data", "", fmt.Errorf("failed to find data")
+      return "failed to find data", "", fmt.Errorf("no match")
     }
     return "search result", fmt.Sprintf("%s", s[1]), nil
   }
