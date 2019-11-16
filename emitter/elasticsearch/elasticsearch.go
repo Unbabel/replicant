@@ -19,12 +19,10 @@ package elasticsearch
 import (
 	"context"
 	"crypto/tls"
-	"math/rand"
 	"net/http"
 	"time"
 
 	"github.com/brunotm/replicant/transaction"
-	"github.com/oklog/ulid/v2"
 	"github.com/olivere/elastic/v7"
 )
 
@@ -43,7 +41,6 @@ type Config struct {
 type Emitter struct {
 	client        *elastic.Client
 	index         string
-	entropy       *ulid.MonotonicEntropy
 	bulkProcessor *elastic.BulkProcessor
 }
 
@@ -56,12 +53,11 @@ func (e *Emitter) Close() {
 
 // Emit results
 func (e *Emitter) Emit(result transaction.Result) {
-	id, _ := ulid.New(ulid.Timestamp(result.Time), e.entropy)
 
 	req := elastic.NewBulkIndexRequest().
 		OpType("create").
 		Index(e.index).
-		Id(id.String()).
+		Id(result.UUID).
 		Doc(result)
 
 	e.bulkProcessor.Add(req)
@@ -111,7 +107,5 @@ func New(config Config) (emitter *Emitter, err error) {
 	}
 
 	emitter.bulkProcessor.Start(context.Background())
-	emitter.entropy = ulid.Monotonic(rand.New(rand.NewSource(time.Now().UnixNano())), 0)
-
 	return emitter, nil
 }

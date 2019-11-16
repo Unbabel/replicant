@@ -19,6 +19,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"runtime/debug"
 
 	"net/http"
 	"time"
@@ -45,8 +46,9 @@ type Server struct {
 }
 
 // New creates a new replicant server
-func New(config Config, s manager.Store) (server *Server, err error) {
+func New(config Config, m *manager.Manager) (server *Server, err error) {
 	server = &Server{}
+	server.manager = m
 	server.config = config
 	server.router = httprouter.New()
 	server.http = &http.Server{}
@@ -63,8 +65,6 @@ func New(config Config, s manager.Store) (server *Server, err error) {
 	if config.ReadHeaderTimeout != 0 {
 		server.http.ReadHeaderTimeout = config.ReadHeaderTimeout
 	}
-
-	server.manager = manager.New(s)
 
 	server.http.Handler = server.router
 	return server, nil
@@ -139,6 +139,7 @@ func recovery(h Handler) (n Handler) {
 		}()
 
 		h(w, r, p)
+		log.Error("recovered from panic").String("stack", string(debug.Stack())).Log()
 
 	}
 }

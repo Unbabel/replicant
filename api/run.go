@@ -20,11 +20,14 @@ import (
 	"context"
 	"encoding/json"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
+	"time"
 
 	"github.com/brunotm/replicant/server"
 	"github.com/brunotm/replicant/transaction"
 	"github.com/brunotm/replicant/transaction/callback"
+	"github.com/oklog/ulid"
 	"gopkg.in/yaml.v2"
 )
 
@@ -58,13 +61,18 @@ func RunTransaction(srv *server.Server) (handle server.Handler) {
 			}
 		}
 
-		tx, err := transaction.New(config)
+		tx, err := srv.Manager().New(config)
 		if err != nil {
 			httpError(w, err, http.StatusInternalServerError)
 			return
 		}
 
-		ctx := context.Background()
+		entropy := ulid.Monotonic(rand.New(rand.NewSource(time.Now().UnixNano())), 0)
+		u, _ := ulid.New(ulid.Timestamp(time.Now()), entropy)
+		uuid := u.String()
+
+		ctx := context.WithValue(context.Background(), "transaction_uuid", uuid)
+
 		if config.CallBack != nil {
 			listener, err := callback.GetListener(config.CallBack.Type)
 			if err != nil {
@@ -76,6 +84,7 @@ func RunTransaction(srv *server.Server) (handle server.Handler) {
 		}
 
 		res := tx.Run(ctx)
+		res.UUID = uuid
 		result.Data = []transaction.Result{res}
 
 		buf, err = json.Marshal(&result)

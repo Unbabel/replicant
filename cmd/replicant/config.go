@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/brunotm/replicant/driver/web"
 	"github.com/brunotm/replicant/emitter/elasticsearch"
 	"github.com/brunotm/replicant/emitter/prometheus"
 	"github.com/brunotm/replicant/emitter/stdout"
@@ -20,8 +21,14 @@ type Config struct {
 	APIPrefix string         `json:"api_prefix" yaml:"api_prefix"`
 	StoreURI  string         `json:"store_path" yaml:"store_uri"`
 	Server    server.Config  `json:"server" yaml:"server"`
+	Drivers   DriverConfig   `json:"drivers" yaml:"drivers"`
 	Emitters  EmitterConfig  `json:"emitters" yaml:"emitters"`
 	Callbacks CallbackConfig `json:"callbacks" yaml:"callbacks"`
+}
+
+// DriverConfig optins
+type DriverConfig struct {
+	Web web.Config `json:"web" yaml:"web"`
 }
 
 // EmitterConfig options
@@ -40,11 +47,19 @@ type CallbackConfig struct {
 var DefaultConfig = Config{
 	LogLevel:  "INFO",
 	APIPrefix: "/api",
+	StoreURI:  "memory:-",
 	Server: server.Config{
 		ListenAddress:     "0.0.0.0:8080",
 		WriteTimeout:      time.Second * 600,
 		ReadTimeout:       time.Second * 600,
 		ReadHeaderTimeout: time.Second * 600,
+	},
+
+	Drivers: DriverConfig{
+		Web: web.Config{
+			ServerURL:    "http://127.0.0.1:9222",
+			DNSDiscovery: true,
+		},
 	},
 
 	Callbacks: CallbackConfig{

@@ -25,7 +25,6 @@ import (
 	"sync"
 
 	"github.com/brunotm/replicant/transaction/callback"
-	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -81,23 +80,22 @@ func New(c Config, router *httprouter.Router) (l *Listener) {
 // Listen creates a handle for webhook based callbacks
 func (l *Listener) Listen(ctx context.Context) (h *callback.Handle, err error) {
 
-	uuid, err := uuid.NewRandom()
-	if err != nil {
-		return nil, err
+	u := ctx.Value("transaction_uuid")
+	uuid, ok := u.(string)
+	if !ok {
+		return nil, fmt.Errorf("transaction_uuid not found in context")
 	}
-
-	id := uuid.String()
-	if _, ok := l.handles.Load(id); ok {
+	if _, ok = l.handles.Load(uuid); ok {
 		return nil, errors.New("callback for id already exists")
 	}
 
 	whandle := handle{}
 	whandle.resp = make(chan callback.Response, 1)
 	whandle.done = make(chan struct{})
-	l.handles.Store(id, whandle)
+	l.handles.Store(uuid, whandle)
 
 	// callback address
-	address := fmt.Sprintf("%s%s/%s", l.url, l.prefix, id)
+	address := fmt.Sprintf("%s%s/%s", l.url, l.prefix, uuid)
 
 	// Each registered webhook has a monitor goroutine for cancellation
 	go func() {
@@ -105,11 +103,11 @@ func (l *Listener) Listen(ctx context.Context) (h *callback.Handle, err error) {
 		select {
 		case <-ctx.Done():
 
-			if w, ok := l.handles.Load(id); ok {
+			if w, ok := l.handles.Load(uuid); ok {
 				whcb := w.(handle)
 				whcb.resp <- callback.Response{
 					Error: fmt.Errorf("timeout waiting for webhook response on %s", address)}
-				l.handles.Delete(id)
+				l.handles.Delete(uuid)
 				close(whandle.resp)
 				close(whandle.done)
 				return
@@ -121,7 +119,7 @@ func (l *Listener) Listen(ctx context.Context) (h *callback.Handle, err error) {
 		}
 	}()
 
-	return &callback.Handle{ID: id, Address: address, Response: whandle.resp}, nil
+	return &callback.Handle{ID: uuid, Address: address, Response: whandle.resp}, nil
 }
 
 type handle struct {

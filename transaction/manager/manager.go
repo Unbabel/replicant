@@ -17,14 +17,21 @@ package manager
 */
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"fmt"
+	"math/rand"
 	"sync"
+	"text/template"
+	"time"
 
 	"github.com/brunotm/log"
+	"github.com/brunotm/replicant/driver"
 	"github.com/brunotm/replicant/internal/scheduler"
 	"github.com/brunotm/replicant/transaction"
 	"github.com/brunotm/replicant/transaction/callback"
+	"github.com/oklog/ulid/v2"
 )
 
 // Emitter is the interface for result emitters to external systems
@@ -43,35 +50,45 @@ func (e EmitterFunc) Emit(result transaction.Result) { e(result) }
 type Manager struct {
 	mtx          sync.Mutex
 	emitters     []Emitter
+	uuidEntropy  *ulid.MonotonicEntropy
 	scheduler    *scheduler.Scheduler
 	transactions Store
+	drivers      sync.Map
 	results      sync.Map
 }
 
 // New creates a new manager
-func New(s Store) (manager *Manager) {
+func New(s Store, d ...driver.Driver) (manager *Manager) {
 	manager = &Manager{}
 	manager.transactions = s
+	manager.uuidEntropy = ulid.Monotonic(rand.New(rand.NewSource(time.Now().UnixNano())), 0)
 	manager.scheduler = scheduler.New()
 	manager.scheduler.Start()
 
+	// Register provided transaction drivers
+	for _, driver := range d {
+		manager.drivers.Store(driver.Type(), driver)
+		log.Info("registered driver").String("driver", driver.Type()).Log()
+	}
+
+	// Reconfigure previously stored transactions
 	s.Iter(func(name string, config transaction.Config) (proceed bool) {
-		tx, err := transaction.New(config)
+		tx, err := manager.New(config)
 
 		if err != nil {
-			log.Info("error creating transaction").
+			log.Error("error creating transaction").
 				String("name", name).String("error", err.Error()).Log()
 			return true
 		}
 
 		if err = manager.schedule(tx); err != nil {
-			log.Info("error scheduling transaction").
+			log.Error("error scheduling transaction").
 				String("name", name).String("error", err.Error()).Log()
 			return true
 		}
 
 		log.Info("added stored transaction").
-			String("name", name).String("type", config.Type).
+			String("name", name).String("driver", config.Driver).
 			String("schedule", config.Schedule).Log()
 
 		return true
@@ -88,7 +105,20 @@ func (m *Manager) Close() (err error) {
 
 // New creates a transaction for the given config
 func (m *Manager) New(config transaction.Config) (tx transaction.Transaction, err error) {
-	return transaction.New(config)
+
+	d, ok := m.drivers.Load(config.Driver)
+
+	if !ok {
+		return nil, fmt.Errorf("transaction driver not registered: %s", config.Driver)
+	}
+
+	if config.Inputs != nil {
+		if config, err = parseTemplate(config); err != nil {
+			return nil, err
+		}
+	}
+
+	return d.(driver.Driver).New(config)
 }
 
 func (m *Manager) schedule(tx transaction.Transaction) (err error) {
@@ -104,11 +134,15 @@ func (m *Manager) schedule(tx transaction.Transaction) (err error) {
 
 	return m.scheduler.AddTaskFunc(config.Name, config.Schedule,
 		func() {
+			var uuid string
 			var result transaction.Result
 
 			for x := 0; x <= config.RetryCount; x++ {
-				ctx := context.Background()
 
+				u, _ := ulid.New(ulid.Timestamp(time.Now()), m.uuidEntropy)
+				uuid = u.String()
+
+				ctx := context.WithValue(context.Background(), "transaction_uuid", uuid)
 				if config.CallBack != nil {
 					ctx = context.WithValue(ctx, config.CallBack.Type, listener)
 				}
@@ -121,6 +155,7 @@ func (m *Manager) schedule(tx transaction.Transaction) (err error) {
 				}
 			}
 
+			result.UUID = uuid
 			m.results.Store(config.Name, result)
 
 			for x := 0; x < len(m.emitters); x++ {
@@ -135,7 +170,7 @@ func (m *Manager) schedule(tx transaction.Transaction) (err error) {
 func (m *Manager) Add(tx transaction.Transaction) (err error) {
 
 	if tx == nil {
-		return errors.New("can't add a nil transaction")
+		return fmt.Errorf("invalid transaction: %s", tx)
 	}
 
 	config := tx.Config()
@@ -161,7 +196,7 @@ func (m *Manager) Add(tx transaction.Transaction) (err error) {
 
 // AddFromConfig is like Add but creates the transaction from a transaction.Config
 func (m *Manager) AddFromConfig(config transaction.Config) (err error) {
-	tx, err := transaction.New(config)
+	tx, err := m.New(config)
 	if err != nil {
 		return err
 	}
@@ -251,4 +286,22 @@ func (m *Manager) GetTransactionsConfig() (configs []transaction.Config) {
 	})
 
 	return configs
+}
+
+func parseTemplate(config transaction.Config) (c transaction.Config, err error) {
+
+	tpl, err := template.New(config.Name).Parse(config.Script)
+	if err != nil {
+		return config, err
+	}
+
+	var buf bytes.Buffer
+	err = tpl.Execute(&buf, config.Inputs)
+	if err != nil {
+		return config, err
+	}
+
+	config.Script = buf.String()
+	return config, nil
+
 }

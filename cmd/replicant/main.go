@@ -9,8 +9,8 @@ import (
 
 	"github.com/brunotm/log"
 	"github.com/brunotm/replicant/api"
-	_ "github.com/brunotm/replicant/driver/go"
-	_ "github.com/brunotm/replicant/driver/web"
+	goDriver "github.com/brunotm/replicant/driver/go"
+	webDriver "github.com/brunotm/replicant/driver/web"
 	"github.com/brunotm/replicant/emitter/elasticsearch"
 	"github.com/brunotm/replicant/emitter/prometheus"
 	"github.com/brunotm/replicant/emitter/stdout"
@@ -36,6 +36,7 @@ func main() {
 	var err error
 	cfg := DefaultConfig
 
+	// Write default config to file
 	if *writeConfig {
 		if *configFile != "" {
 			defaultConfigFile = *configFile
@@ -52,36 +53,37 @@ func main() {
 		os.Exit(0)
 	}
 
+	// Load config from file if specified
 	if *configFile != "" {
 		cfg, err = readConfigFile(*configFile)
 		if err != nil {
 			log.Error("could not read config file").
-				String("file", *configFile).
+				String("path", *configFile).
 				String("error", err.Error()).Log()
 			os.Exit(1)
 		}
 	}
 
-	var st manager.Store
-	if cfg.StoreURI == "" {
-		cfg.StoreURI = "memory:-"
-	}
-
+	// Initialize the transaction store
 	log.Info("initializing store").String("uri", cfg.StoreURI).Log()
-	st, err = store.New(cfg.StoreURI)
+	st, err := store.New(cfg.StoreURI)
 	if err != nil {
 		log.Error("could not initialize store").
 			String("error", err.Error()).Log()
 		os.Exit(1)
 	}
 
-	srv, err := server.New(cfg.Server, st)
+	// Create a new transaction manager and service
+	m := manager.New(st, goDriver.New(), webDriver.New(cfg.Drivers.Web))
+
+	srv, err := server.New(cfg.Server, m)
 	if err != nil {
 		log.Error("failed to create replicant server").
 			String("error", err.Error()).Log()
 		os.Exit(1)
 	}
 
+	// Register the webhook asynchronous response listener
 	err = callback.Register("webhook", webhook.New(cfg.Callbacks.Webhook, srv.Router()))
 	if err != nil {
 		log.Error("failed to register webhook response handler").
@@ -93,6 +95,7 @@ func main() {
 		String("advertise_url",
 			fmt.Sprintf("%s%s", cfg.Callbacks.Webhook.AdvertiseURL, cfg.Callbacks.Webhook.PathPrefix)).Log()
 
+	// Register result emitters with the manager service
 	var e manager.Emitter
 	srv.Manager().AddEmitter(stdout.New(cfg.Emitters.Stdout))
 
@@ -114,11 +117,13 @@ func main() {
 		srv.Manager().AddEmitter(e)
 	}
 
+	// Enable profiling endpoints
 	if cfg.Debug {
 		log.Info("adding debug api routes for runtime profiling data").Log()
 		api.AddDebugRoutes(srv)
 	}
 
+	// Register all api endpoints and start the service
 	api.AddAllRoutes(cfg.APIPrefix, srv)
 	go srv.Start()
 

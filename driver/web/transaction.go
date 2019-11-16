@@ -20,9 +20,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
+	"net/url"
+	"strings"
 	"time"
 
-	"github.com/MontFerret/ferret/pkg/compiler"
 	"github.com/MontFerret/ferret/pkg/drivers"
 	"github.com/MontFerret/ferret/pkg/drivers/cdp"
 	"github.com/MontFerret/ferret/pkg/runtime"
@@ -30,57 +32,13 @@ import (
 	"github.com/brunotm/replicant/transaction"
 )
 
-const (
-	// Type of driver
-	Type = "web"
-)
-
-func init() {
-	transaction.Register(
-		Type,
-		func(config transaction.Config) (tx transaction.Transaction, err error) {
-			return New(config)
-		})
-}
-
 // Transaction is a pre-compiled replicant transaction for web applications
 type Transaction struct {
-	config  transaction.Config
-	server  string
-	timeout time.Duration
-	program *runtime.Program
-}
-
-// New creates a web transaction
-func New(config transaction.Config) (tx *Transaction, err error) {
-	tx = &Transaction{}
-
-	s, ok := config.Inputs["cdp_address"]
-	if !ok {
-		return nil, fmt.Errorf("cdp_address not specified in inputs")
-	}
-
-	server, ok := s.(string)
-	if !ok {
-		return nil, fmt.Errorf("unexpected value for cdp_address")
-	}
-
-	tx.server = server
-
-	if config.Timeout != "" {
-		tx.timeout, err = time.ParseDuration(config.Timeout)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	tx.program, err = compiler.New().Compile(config.Script)
-	if err != nil {
-		return nil, err
-	}
-
-	tx.config = config
-	return tx, nil
+	config       transaction.Config
+	server       *url.URL
+	timeout      time.Duration
+	program      *runtime.Program
+	dnsDiscovery bool
 }
 
 // Config returns the transaction config
@@ -91,18 +49,28 @@ func (t *Transaction) Config() (config transaction.Config) {
 // Run executes the web transaction
 func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 
+	var err error
+
 	if t.timeout > 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, t.timeout)
 		defer cancel()
 	}
 
+	result.Name = t.config.Name
+	result.Driver = "web"
+
+	cdpAddr, err := t.resolveAddr()
+	if err != nil {
+		result.Error = err
+		result.Message = "failed to handle cpd url"
+		return result
+	}
+
 	ctx = drivers.WithContext(
-		ctx, cdp.NewDriver(cdp.WithAddress(t.server)),
+		ctx, cdp.NewDriver(cdp.WithAddress(cdpAddr)),
 		drivers.AsDefault())
 
-	result.Name = t.config.Name
-	result.Type = "web"
 	result.Time = time.Now()
 
 	// runtime.WithLog runtime.WithLogFields runtime.WithLogLevel
@@ -126,4 +94,35 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 	}
 
 	return result
+}
+
+// resolveAddr parses the cdp URL and converts the hostname into an ip address
+// to ensure we talk with the same cpd server during the whole transaction lifecycle
+// and avoid invalid sessions when dealing with DNS load balacing (e.g. headless k8s services)
+func (t *Transaction) resolveAddr() (a string, err error) {
+	serverURL := t.server.String()
+	serverHostname := t.server.Hostname()
+
+	if !t.dnsDiscovery {
+		return serverURL, nil
+	}
+
+	// check if address is already an ip address
+	if ip := net.ParseIP(serverHostname); ip != nil {
+		return serverURL, nil
+	}
+
+	// resolve server ip addr
+	ips, err := net.LookupIP(serverHostname)
+	if err != nil {
+		return "", err
+	}
+
+	if len(ips) == 0 {
+		return "", fmt.Errorf("could not resolve hostname in %s", serverHostname)
+	}
+
+	ip := ips[0]
+	return strings.Replace(serverURL, serverHostname, ip.String(), 1), nil
+
 }

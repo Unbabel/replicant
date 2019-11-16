@@ -24,8 +24,9 @@ import (
 
 // Result represents a transaction execution result
 type Result struct {
+	UUID            string            `json:"uuid" yaml:"uuid"`
 	Name            string            `json:"name" yaml:"name"`
-	Type            string            `json:"type" yaml:"type"`
+	Driver          string            `json:"driver" yaml:"driver"`
 	Failed          bool              `json:"failed" yaml:"failed"`
 	Message         string            `json:"message" yaml:"message"`
 	Data            string            `json:"data" yaml:"data"`

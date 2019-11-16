@@ -1,6 +1,7 @@
 package store
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -10,6 +11,8 @@ import (
 
 var (
 	registry = sync.Map{}
+	// ErrTransactionNotFound transaction not found
+	ErrTransactionNotFound = errors.New("transaction not found")
 )
 
 // Supplier for manager.Store
