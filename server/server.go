@@ -19,6 +19,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"runtime/debug"
 
 	"net/http"
 	"time"
@@ -138,6 +139,7 @@ func recovery(h Handler) (n Handler) {
 		}()
 
 		h(w, r, p)
+		log.Error("recovered from panic").String("stack", string(debug.Stack())).Log()
 
 	}
 }
