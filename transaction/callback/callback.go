@@ -39,7 +39,7 @@ type Listener interface {
 
 // Handle is a registered async response handle
 type Handle struct {
-	ID       string
+	UUID     string
 	Address  string
 	Response <-chan Response
 }

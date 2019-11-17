@@ -119,7 +119,7 @@ func (l *Listener) Listen(ctx context.Context) (h *callback.Handle, err error) {
 		}
 	}()
 
-	return &callback.Handle{ID: uuid, Address: address, Response: whandle.resp}, nil
+	return &callback.Handle{UUID: uuid, Address: address, Response: whandle.resp}, nil
 }
 
 type handle struct {
