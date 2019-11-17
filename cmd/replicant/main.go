@@ -15,12 +15,12 @@ import (
 	"github.com/brunotm/replicant/emitter/prometheus"
 	"github.com/brunotm/replicant/emitter/stdout"
 	"github.com/brunotm/replicant/internal/webhook"
+	"github.com/brunotm/replicant/manager"
 	"github.com/brunotm/replicant/server"
 	"github.com/brunotm/replicant/store"
 	_ "github.com/brunotm/replicant/store/leveldb"
 	_ "github.com/brunotm/replicant/store/memory"
 	"github.com/brunotm/replicant/transaction/callback"
-	"github.com/brunotm/replicant/transaction/manager"
 )
 
 var (

@@ -29,6 +29,7 @@ import (
 	"github.com/brunotm/log"
 	"github.com/brunotm/replicant/driver"
 	"github.com/brunotm/replicant/internal/scheduler"
+	"github.com/brunotm/replicant/store"
 	"github.com/brunotm/replicant/transaction"
 	"github.com/brunotm/replicant/transaction/callback"
 	"github.com/oklog/ulid/v2"
@@ -52,13 +53,13 @@ type Manager struct {
 	emitters     []Emitter
 	uuidEntropy  *ulid.MonotonicEntropy
 	scheduler    *scheduler.Scheduler
-	transactions Store
+	transactions store.Store
 	drivers      sync.Map
 	results      sync.Map
 }
 
 // New creates a new manager
-func New(s Store, d ...driver.Driver) (manager *Manager) {
+func New(s store.Store, d ...driver.Driver) (manager *Manager) {
 	manager = &Manager{}
 	manager.transactions = s
 	manager.uuidEntropy = ulid.Monotonic(rand.New(rand.NewSource(time.Now().UnixNano())), 0)
