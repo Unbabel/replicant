@@ -1,0 +1,23 @@
+version: "3.7"
+
+services:
+  server:
+    image: docker.io/brunotm/replicant:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - data:/data
+    configs:
+      - config.yaml
+    command: /app/replicant -config /config.yaml
+  cdp:
+    image: docker.io/chromedp/headless-shell:78.0.3904.97
+    deploy:
+      mode: replicated
+      replicas: 2
+      endpoint_mode: dnsrr
+volumes:
+  data: null
+configs:
+  config.yaml:
+    file: ./example-config.yaml

@@ -1,7 +1,7 @@
 debug: false                                  # Register server profiling endpoints
 log_level: INFO                               # Log level
 api_prefix: /api                              # API prefix for the api endpoints
-store_uri: "memory:-"                         # Store connection string
+store_uri: "leveldb:/data"                    # Store connection string
 server:
   listen_address: 0.0.0.0:8080                # Address to listen on
   write_timeout: 10m0s                        # API write timeout
@@ -9,7 +9,7 @@ server:
   read_header_timeout: 10m0s                  # Header read timeout
 drivers:
   web:
-    server_url: http://127.0.0.1:9222         # URL of the CDP server for web application transactions, can by overridden by the cdp_address in transaction inputs
+    server_url: http://replicant_cdp:9222     # URL of the CDP server for web application transactions, can by overridden by the cdp_address in transaction inputs
     dns_discovery: true                       # Discover servers IP address from DNS
 emitters:
   stdout:                                     # Emit results to standard output in JSON format

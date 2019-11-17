@@ -1,4 +1,5 @@
 # ![Replicant](https://raw.githubusercontent.com/brunotm/replicant/master/doc/logo.png)
+
 [![Go Report Card](https://goreportcard.com/badge/github.com/brunotm/replicant?style=flat-square)](https://goreportcard.com/report/github.com/brunotm/replicant)
 [![GoDoc](https://img.shields.io/badge/api-reference-blue.svg?style=flat-square)](https://godoc.org/github.com/brunotm/replicant)
 [![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/brunotm/replicant?style=flat-square)](https://hub.docker.com/r/brunotm/replicant)
@@ -19,19 +20,22 @@ It defines a common interface for transactions and results, provides a transacti
 
 ## Examples
 
-Running the server with the [example config](https://github.com/brunotm/replicant/blob/master/example-config.yaml) from the project root dir.
+## Running the replicant server locally with docker
+
+Using [example config](https://github.com/brunotm/replicant/blob/master/example-config.yaml) from the project root dir.
+
 ```bash
-go run cmd/replicant/*.go -config $PWD/example-config.yaml
+docker stack deploy -c $PWD/docker-compose.yaml replicant
 ```
+
+This will deploy the replicant server and 2 chrome-headless nodes for web tests, persisting data under /data.
 
 ### Web application testing (local development)
 
-* The web application testing support is based on the FQL (Ferret Query Language), [documentation](https://github.com/MontFerret/ferret).
-
-* Start the Chrome browser with Chrome DevTools Protocol enabled:
-`/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222 &`
+Web application testing support is based on the FQL (Ferret Query Language), [documentation](https://github.com/MontFerret/ferret).
 
 #### Test definition (can be also in json format)
+
 ```yaml
 POST http://127.0.0.1:8080/api/v1/run
 content-type: application/yaml
@@ -65,6 +69,7 @@ script: |
 ```
 
 #### Response
+
 ```json
 {
   "data": [
@@ -93,9 +98,10 @@ script: |
 
 ### API testing (local development)
 
-* The api testing support is based on interpreted go code, [documentation](https://github.com/containous/yaegi).
+API testing support is based on interpreted go code, [documentation](https://github.com/containous/yaegi).
 
 #### Test definition (can be also in json format)
+
 ```yaml
 POST http://127.0.0.1:8080/api/v1/run
 content-type: application/yaml
@@ -156,6 +162,7 @@ script: |
 ```
 
 #### Response
+
 ```json
 {
   "data": [
@@ -213,7 +220,9 @@ script: |
 * [Ferret Declarative web scraping](https://github.com/MontFerret/ferret)
 
 ## Contact
+
 Bruno Moura [brunotm@gmail.com](mailto:brunotm@gmail.com)
 
 ## License
+
 Replicant source code is available under the Apache Version 2.0 [License](https://github.com/brunotm/replicant/blob/master/LICENSE)
