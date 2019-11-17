@@ -1,8 +1,6 @@
-package main
+package config
 
 import (
-	"io/ioutil"
-	"os"
 	"time"
 
 	"github.com/brunotm/replicant/driver/web"
@@ -11,7 +9,6 @@ import (
 	"github.com/brunotm/replicant/emitter/stdout"
 	"github.com/brunotm/replicant/internal/webhook"
 	"github.com/brunotm/replicant/server"
-	"gopkg.in/yaml.v2"
 )
 
 // Config for replicant
@@ -81,38 +78,4 @@ var DefaultConfig = Config{
 
 		Elasticsearch: elasticsearch.Config{},
 	},
-}
-
-func writeConfigFile(c Config, f string) (err error) {
-	b, err := yaml.Marshal(&c)
-	if err != nil {
-		return err
-	}
-
-	err = ioutil.WriteFile(*configFile, b, 0644)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func readConfigFile(f string) (c Config, err error) {
-	file, err := os.Open(f)
-	if err != nil {
-		return c, err
-	}
-
-	b, err := ioutil.ReadAll(file)
-	if err != nil {
-		return c, err
-	}
-	file.Close()
-
-	err = yaml.Unmarshal(b, &c)
-	if err != nil {
-		return c, err
-	}
-
-	return c, nil
 }

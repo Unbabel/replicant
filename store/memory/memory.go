@@ -5,14 +5,13 @@ import (
 
 	"github.com/brunotm/replicant/store"
 	"github.com/brunotm/replicant/transaction"
-	"github.com/brunotm/replicant/transaction/manager"
 )
 
-var _ manager.Store = (*Store)(nil)
+var _ store.Store = (*Store)(nil)
 
 func init() {
 	store.Register("memory",
-		func(uri string) (s manager.Store, err error) {
+		func(uri string) (s store.Store, err error) {
 			return New(uri)
 		})
 }

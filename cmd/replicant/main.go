@@ -4,23 +4,26 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/signal"
 
 	"github.com/brunotm/log"
 	"github.com/brunotm/replicant/api"
+	"github.com/brunotm/replicant/config"
 	goDriver "github.com/brunotm/replicant/driver/go"
 	webDriver "github.com/brunotm/replicant/driver/web"
 	"github.com/brunotm/replicant/emitter/elasticsearch"
 	"github.com/brunotm/replicant/emitter/prometheus"
 	"github.com/brunotm/replicant/emitter/stdout"
 	"github.com/brunotm/replicant/internal/webhook"
+	"github.com/brunotm/replicant/manager"
 	"github.com/brunotm/replicant/server"
 	"github.com/brunotm/replicant/store"
 	_ "github.com/brunotm/replicant/store/leveldb"
 	_ "github.com/brunotm/replicant/store/memory"
 	"github.com/brunotm/replicant/transaction/callback"
-	"github.com/brunotm/replicant/transaction/manager"
+	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -34,7 +37,7 @@ func main() {
 	flag.Parse()
 
 	var err error
-	cfg := DefaultConfig
+	cfg := config.DefaultConfig
 
 	// Write default config to file
 	if *writeConfig {
@@ -141,4 +144,38 @@ func main() {
 
 	log.Info("replicant server stopped").Log()
 
+}
+
+func writeConfigFile(c config.Config, f string) (err error) {
+	b, err := yaml.Marshal(&c)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(*configFile, b, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func readConfigFile(f string) (c config.Config, err error) {
+	file, err := os.Open(f)
+	if err != nil {
+		return c, err
+	}
+
+	b, err := ioutil.ReadAll(file)
+	if err != nil {
+		return c, err
+	}
+	file.Close()
+
+	err = yaml.Unmarshal(b, &c)
+	if err != nil {
+		return c, err
+	}
+
+	return c, nil
 }

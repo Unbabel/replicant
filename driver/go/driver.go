@@ -1,15 +1,5 @@
 package web
 
-import (
-	"context"
-	"errors"
-	"time"
-
-	"github.com/brunotm/replicant/transaction"
-	"github.com/containous/yaegi/interp"
-	"github.com/containous/yaegi/stdlib"
-)
-
 /*
    Copyright 2019 Bruno Moura <brunotm@gmail.com>
 
@@ -25,6 +15,16 @@ import (
    See the License for the specific language governing permissions and
    limitations under the License.
 */
+
+import (
+	"context"
+	"errors"
+	"time"
+
+	"github.com/brunotm/replicant/transaction"
+	"github.com/containous/yaegi/interp"
+	"github.com/containous/yaegi/stdlib"
+)
 
 // Driver for Go language based transactions
 type Driver struct{}
