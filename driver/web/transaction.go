@@ -59,6 +59,8 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 
 	result.Name = t.config.Name
 	result.Driver = "web"
+	result.Time = time.Now()
+	result.Metadata = t.config.Metadata
 
 	cdpAddr, err := t.resolveAddr()
 	if err != nil {
@@ -71,8 +73,6 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 		ctx, cdp.NewDriver(cdp.WithAddress(cdpAddr)),
 		drivers.AsDefault())
 
-	result.Time = time.Now()
-
 	// runtime.WithLog runtime.WithLogFields runtime.WithLogLevel
 	r, err := t.program.Run(ctx, runtime.WithLogLevel(logging.ErrorLevel))
 	result.DurationSeconds = time.Since(result.Time).Seconds()
@@ -81,8 +81,6 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 		result.Error = err
 		result.Failed = true
 	}
-
-	result.Metadata = t.config.Metadata
 
 	if len(r) == 0 {
 		return result
