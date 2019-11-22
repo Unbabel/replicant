@@ -47,9 +47,9 @@ var DefaultConfig = Config{
 	StoreURI:  "memory:-",
 	Server: server.Config{
 		ListenAddress:     "0.0.0.0:8080",
-		WriteTimeout:      time.Second * 600,
-		ReadTimeout:       time.Second * 600,
-		ReadHeaderTimeout: time.Second * 600,
+		WriteTimeout:      5 * time.Minute,
+		ReadTimeout:       5 * time.Minute,
+		ReadHeaderTimeout: 5 * time.Minute,
 	},
 
 	Drivers: DriverConfig{
