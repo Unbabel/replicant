@@ -35,6 +35,11 @@ import (
 	"github.com/oklog/ulid/v2"
 )
 
+const (
+	// DefaultTransactionTimeout if not specified
+	DefaultTransactionTimeout = "5m"
+)
+
 // Emitter is the interface for result emitters to external systems
 type Emitter interface {
 	Emit(result transaction.Result)
@@ -117,6 +122,10 @@ func (m *Manager) New(config transaction.Config) (tx transaction.Transaction, er
 		if config, err = parseTemplate(config); err != nil {
 			return nil, err
 		}
+	}
+
+	if config.Timeout == "" {
+		config.Timeout = DefaultTransactionTimeout
 	}
 
 	return d.(driver.Driver).New(config)
