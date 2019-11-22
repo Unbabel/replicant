@@ -92,13 +92,17 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 			return result
 		}
 
-		err = json.Unmarshal([]byte(rs), &result)
+		var jsRes jsResult
+		err = json.Unmarshal([]byte(rs), &jsRes)
 		if err != nil {
 			result.Message = "failed to deserialize result from javascript vm"
 			result.Failed = true
 			result.Error = err
 			return result
 		}
+		result.Data = jsRes.Data
+		result.Message = jsRes.Message
+		result.Failed = jsRes.Failed
 
 	case <-timer.C:
 		timer.Stop()

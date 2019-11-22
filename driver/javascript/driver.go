@@ -40,21 +40,24 @@ func New() (d *Driver, err error) {
 	d.vm.Set("replicant_http_do", func(call otto.FunctionCall) otto.Value {
 		jsonHRO := call.Argument(0).String()
 		if jsonHRO == "undefined" {
-			r, _ := d.toJSvalue(&JSHttpResponse{Error: fmt.Errorf("no http request was specified")})
+			r, _ := d.toJSvalue(&httpResponse{Error: fmt.Errorf("no http request was specified")})
 			return r
 		}
-		hro := JSHttpRequest{}
+		hro := httpRequest{}
 
 		if err := json.Unmarshal([]byte(jsonHRO), &hro); err != nil {
-			r, _ := d.toJSvalue(&JSHttpResponse{Error: fmt.Errorf("error deserializing request")})
+			r, _ := d.toJSvalue(&httpResponse{Error: fmt.Errorf("error deserializing request")})
 			return r
 		}
 
+		// handle form data if specified
 		formData := url.Values{}
 		for k, v := range hro.FormData {
 			formData.Set(k, v)
 		}
 
+		// handle request body if specified
+		// if both are specified request body have precedence
 		var body io.Reader
 		if hro.Body != "" {
 			body = strings.NewReader(hro.Body)
@@ -64,10 +67,11 @@ func New() (d *Driver, err error) {
 
 		u, err := url.ParseRequestURI(hro.URL)
 		if err != nil {
-			r, _ := d.toJSvalue(&JSHttpResponse{Error: fmt.Errorf("failed to parse request URL")})
+			r, _ := d.toJSvalue(&httpResponse{Error: fmt.Errorf("failed to parse request URL")})
 			return r
 		}
 
+		// handle url query parameters
 		if len(hro.Params) > 0 {
 			q, _ := url.ParseQuery(u.RawQuery)
 			for k, v := range hro.Params {
@@ -78,7 +82,7 @@ func New() (d *Driver, err error) {
 
 		req, err := http.NewRequest(hro.Method, u.String(), body)
 		if err != nil {
-			r, _ := d.toJSvalue(&JSHttpResponse{Error: fmt.Errorf("failed to create HTTP request: %s", err)})
+			r, _ := d.toJSvalue(&httpResponse{Error: fmt.Errorf("failed to create HTTP request: %s", err)})
 			return r
 		}
 
@@ -95,11 +99,11 @@ func New() (d *Driver, err error) {
 		client := &http.Client{Transport: tr}
 		resp, err := client.Do(req)
 		if err != nil {
-			r, _ := d.toJSvalue(&JSHttpResponse{Error: fmt.Errorf("request failed: %s", err)})
+			r, _ := d.toJSvalue(&httpResponse{Error: fmt.Errorf("request failed: %s", err)})
 			return r
 		}
 
-		jsResp := JSHttpResponse{}
+		jsResp := httpResponse{}
 		jsResp.Status = resp.Status
 		jsResp.StatusCode = resp.StatusCode
 		jsResp.Protocol = resp.Request.Proto
@@ -110,7 +114,7 @@ func New() (d *Driver, err error) {
 
 		b, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			r, _ := d.toJSvalue(&JSHttpResponse{Error: fmt.Errorf("unable to read response body: %s", err)})
+			r, _ := d.toJSvalue(&httpResponse{Error: fmt.Errorf("unable to read response body: %s", err)})
 			return r
 		}
 		jsResp.Body = string(b)
@@ -160,32 +164,38 @@ func (d *Driver) toJSvalue(v interface{}) (o otto.Value, err error) {
 	return d.vm.ToValue(string(b))
 }
 
-type JSHttpRequest struct {
-	URL           string            `json:"url"`
-	Method        string            `json:"method"`
-	Body          string            `json:"body"`
-	Header        map[string]string `json:"header"`
-	Params        map[string]string `json:"params"`
-	FormData      map[string]string `json:"form_data"`
-	SSLSkipVerify bool              `json:"ssl_skip_verify"`
+type httpRequest struct {
+	URL           string            `json:"URL"`
+	Method        string            `json:"Method"`
+	Body          string            `json:"Body"`
+	Header        map[string]string `json:"Header"`
+	Params        map[string]string `json:"Params"`
+	FormData      map[string]string `json:"FormData"`
+	SSLSkipVerify bool              `json:"SSLSkipVerify"`
 }
-type JSHttpResponse struct {
-	Status     string            `json:"status"`
-	StatusCode int               `json:"status_code"`
-	Protocol   string            `json:"protocol"`
-	Body       string            `json:"body"`
-	Header     map[string]string `json:"header"`
-	Error      error             `json:"error"`
+type httpResponse struct {
+	Status     string            `json:"Status"`
+	StatusCode int               `json:"StatusCode"`
+	Protocol   string            `json:"Protocol"`
+	Body       string            `json:"Body"`
+	Header     map[string]string `json:"Header"`
+	Error      error             `json:"Error"`
+}
+
+type jsResult struct {
+	Data    string
+	Failed  bool
+	Message string
 }
 
 // MarshalJSON is custom marshaler for result
-func (r *JSHttpResponse) MarshalJSON() (data []byte, err error) {
+func (r *httpResponse) MarshalJSON() (data []byte, err error) {
 	var stringError string
 	if r.Error != nil {
 		stringError = r.Error.Error()
 	}
 
-	type alias JSHttpResponse
+	type alias httpResponse
 	return json.Marshal(&struct {
 		*alias
 		Error string `json:"error"`
@@ -196,8 +206,8 @@ func (r *JSHttpResponse) MarshalJSON() (data []byte, err error) {
 }
 
 // UnmarshalJSON is custom unmarshaler for result
-func (r *JSHttpResponse) UnmarshalJSON(data []byte) error {
-	type alias JSHttpResponse
+func (r *httpResponse) UnmarshalJSON(data []byte) error {
+	type alias httpResponse
 	aux := &struct {
 		*alias
 		Error string `json:"error"`
@@ -226,10 +236,10 @@ replicant.Log = function (message) {
 
 replicant.NewResponse = function () {
 	return {
-		data: "",
-		message: "",
-		failed: false,
-		json: function () {
+		Data: "",
+		Message: "",
+		Failed: false,
+		JSON: function () {
 			return JSON.stringify(this);
 		}
 	};
@@ -237,23 +247,23 @@ replicant.NewResponse = function () {
 
 replicant.http.NewRequest = function () {
 	return {
-		url: "",
-		method: "",
-		body: "",
-		header: {},
-		params: {},
-		form_data: {},
-		ssl_skip_verify: false,
-		json: function () {
+		URL: "",
+		Method: "",
+		Body: "",
+		Header: {},
+		Params: {},
+		FormData: {},
+		SSLSkipVerify: false,
+		JSON: function () {
 			return JSON.stringify(this)
 		}
 	};
 };
 
 replicant.http.Do = function (request) {
-	resp = replicant_http_do(request.json())
+	resp = replicant_http_do(request.JSON())
 	r = JSON.parse(resp);
-	r.json = function () {
+	r.JSON = function () {
 		return JSON.stringify(this);
 	};
 	return r;
