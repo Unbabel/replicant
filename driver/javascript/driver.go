@@ -32,10 +32,6 @@ func New() (d *Driver, err error) {
 		return otto.Value{}
 	})
 
-	if _, err = d.vm.Run(coreJS); err != nil {
-		return nil, fmt.Errorf("error initializing VM core objects: %s", err)
-	}
-
 	// add http request capabilities to js vm
 	d.vm.Set("replicant_http_do", func(call otto.FunctionCall) otto.Value {
 		jsonHRO := call.Argument(0).String()
@@ -122,6 +118,11 @@ func New() (d *Driver, err error) {
 		r, _ := d.toJSvalue(jsResp)
 		return r
 	})
+
+	// load replicant javascript utils
+	if _, err = d.vm.Run(replicantJS); err != nil {
+		return nil, fmt.Errorf("error initializing VM core objects: %s", err)
+	}
 
 	return d, nil
 }
@@ -226,7 +227,7 @@ func (r *httpResponse) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-const coreJS = `
+const replicantJS = `
 var replicant = {};
 replicant.http = {};
 
