@@ -6,7 +6,7 @@
 
 Replicant is a synthetic transaction execution framework named after the bioengineered androids from Blade Runner. (all synthetics came from Blade Runner :)
 
-It defines a common interface for transactions and results, provides a transaction manager, execution scheduler, api and facilities for emitting result data to external systems.
+It allows web application testing using chromedp, and api application testing using Go or Javascript. Provides a test manager, execution scheduler, api and facilities for emitting result data to external systems.
 
 ## Status
 
@@ -101,6 +101,54 @@ script: |
 API testing support is based on interpreted go code, [documentation](https://github.com/containous/yaegi).
 
 #### Test definition (can be also in json format)
+
+##### Using the javascript driver
+
+```yaml
+POST http://127.0.0.1:8080/api/v1/run
+content-type: application/yaml
+
+name: duckduckgo-api-search
+driver: javascript
+schedule: '@every 60s'
+timeout: 60s
+retry_count: 2
+inputs:
+  url: "https://api.duckduckgo.com"
+  text: "blade runner"
+metadata:
+  transaction: api-search
+  application: duckduckgo
+  environment: production
+  component: api
+script: |
+  function Run(ctx) {
+    req = replicant.http.NewRequest()
+    req.URL = "{{ index . "url" }}"
+    req.Params.q = "{{ index . "text" }}"
+    req.Params.format = "json"
+    req.Params.no_redirect = "1"
+    resp = replicant.http.Do(req)
+    data = JSON.parse(resp.Body)
+    rr = replicant.NewResponse()
+    switch(data.RelatedTopics && data.RelatedTopics.length > 0) {
+      case true:
+        rr.Data = data.RelatedTopics[0].Text
+        rr.Message = resp.Status
+        rr.Failed = false
+        break
+      case false:
+        rr.Data = JSON.stringify(data)
+        rr.Message = resp.Status
+        rr.Failed = true
+        break
+    }
+    return rr.JSON()
+  }
+```
+
+
+##### Using the Go driver
 
 ```yaml
 POST http://127.0.0.1:8080/api/v1/run
