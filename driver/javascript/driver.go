@@ -32,6 +32,14 @@ func New() (d *Driver, err error) {
 		return otto.Value{}
 	})
 
+	// add sleep to js vm
+	d.vm.Set("replicant_sleep", func(call otto.FunctionCall) otto.Value {
+		ms, _ := call.Argument(0).ToInteger()
+		log.Debug("sleeping").String("driver", "javascript").Int("milliseconds", ms).Log()
+		time.Sleep(time.Duration(ms) * time.Millisecond)
+		return otto.Value{}
+	})
+
 	// add http request capabilities to js vm
 	d.vm.Set("replicant_http_do", func(call otto.FunctionCall) otto.Value {
 		jsonHRO := call.Argument(0).String()
@@ -81,11 +89,11 @@ func New() (d *Driver, err error) {
 			r, _ := d.toJSvalue(&httpResponse{Error: fmt.Errorf("failed to create HTTP request: %s", err)})
 			return r
 		}
+		req.Close = true
 
 		for k, v := range hro.Header {
 			req.Header.Set(k, v)
 		}
-		req.Close = true
 
 		tr := &http.Transport{TLSClientConfig: &tls.Config{}}
 		if hro.SSLSkipVerify {
@@ -93,11 +101,18 @@ func New() (d *Driver, err error) {
 		}
 
 		client := &http.Client{Transport: tr}
+		defer client.CloseIdleConnections()
+
 		resp, err := client.Do(req)
 		if err != nil {
 			r, _ := d.toJSvalue(&httpResponse{Error: fmt.Errorf("request failed: %s", err)})
 			return r
 		}
+		defer resp.Body.Close()
+
+		// log.Debug("http request").String("url", u.String()).
+		// 	String("method", hro.Method).Bool("skip_ssl_verify", hro.SSLSkipVerify).
+		// 	Int("status_code", int64(resp.StatusCode)).String("status", resp.Status).Log()
 
 		jsResp := httpResponse{}
 		jsResp.Status = resp.Status
@@ -268,5 +283,9 @@ replicant.http.Do = function (request) {
 		return JSON.stringify(this);
 	};
 	return r;
+};
+
+replicant.Sleep = function(milliseconds) {
+  replicant_sleep(milliseconds)
 };
 `
