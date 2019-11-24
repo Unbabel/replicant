@@ -12,6 +12,7 @@ import (
 	"github.com/brunotm/replicant/api"
 	"github.com/brunotm/replicant/config"
 	goDriver "github.com/brunotm/replicant/driver/go"
+	jsDriver "github.com/brunotm/replicant/driver/javascript"
 	webDriver "github.com/brunotm/replicant/driver/web"
 	"github.com/brunotm/replicant/emitter/elasticsearch"
 	"github.com/brunotm/replicant/emitter/prometheus"
@@ -76,8 +77,18 @@ func main() {
 		os.Exit(1)
 	}
 
+	driverJS, err := jsDriver.New()
+	if err != nil {
+		log.Error("could not initialize javascript driver").
+			String("error", err.Error()).Log()
+		os.Exit(1)
+	}
+
 	// Create a new transaction manager and service
-	m := manager.New(st, goDriver.New(), webDriver.New(cfg.Drivers.Web))
+	m := manager.New(st,
+		driverJS,
+		goDriver.New(),
+		webDriver.New(cfg.Drivers.Web))
 
 	srv, err := server.New(cfg.Server, m)
 	if err != nil {

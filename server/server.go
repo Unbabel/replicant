@@ -19,6 +19,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"runtime/debug"
 
 	"net/http"
@@ -127,6 +128,10 @@ func recovery(h Handler) (n Handler) {
 		defer func() {
 			err := recover()
 			if err != nil {
+				log.Error("recovered from panic").
+					String("error", fmt.Sprintf("%s", err)).
+					String("stack", string(debug.Stack())).Log()
+
 				jsonBody, _ := json.Marshal(map[string]interface{}{
 					"message": "There was an internal server error",
 					"error":   err,
@@ -139,8 +144,6 @@ func recovery(h Handler) (n Handler) {
 		}()
 
 		h(w, r, p)
-		log.Error("recovered from panic").String("stack", string(debug.Stack())).Log()
-
 	}
 }
 
