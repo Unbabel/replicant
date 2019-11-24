@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/brunotm/replicant/transaction"
+	"github.com/brunotm/replicant/transaction/callback"
 	"github.com/robertkrimen/otto"
 )
 
@@ -42,22 +43,44 @@ func (t *Transaction) Config() (config transaction.Config) {
 
 // Run executes the transaction
 func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
-	result.Name = t.config.Name
-	result.Driver = "javascript"
-	result.Time = time.Now()
-	result.Metadata = t.config.Metadata
+	u := ctx.Value("transaction_uuid")
+	uuid, ok := u.(string)
+	if !ok {
+		result.Failed = true
+		result.Error = fmt.Errorf("transaction_uuid not found in context")
+	}
+
+	if t.timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, t.timeout)
+		defer cancel()
+	}
+
+	// If dealing with async responses for this transaction, we must first get a Listener and Handle
+	var err error
+	var handle *callback.Handle
+	if t.config.CallBack != nil {
+		listener, ok := ctx.Value(t.config.CallBack.Type).(callback.Listener)
+		if !ok {
+			result.Failed = true
+			result.Error = fmt.Errorf("callback not found or does not implement callback.Listener interface")
+		}
+
+		handle, err = listener.Listen(ctx)
+		if err != nil {
+			result.Failed = true
+			result.Error = fmt.Errorf("could not handle callback: %s", err)
+			return result
+		}
+
+	}
 
 	// copy the vm to avoid problems such as cancellation and GC
 	// Use a channel to read the values of execution from the running
 	// goroutine needed due to the otto cancelation mechanism which needs a panic
 	vm := t.vm.Copy()
-
-	// vmResp type
-	type vmResp struct {
-		value otto.Value
-		err   error
-	}
-	respCh := make(chan vmResp, 1)
+	vm.Interrupt = make(chan func(), 1)
+	respCh := make(chan transaction.Result, 1)
 
 	// Run in a service goroutine and recover in case
 	// of cancellation
@@ -66,53 +89,145 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 			recover()
 		}()
 
-		var r vmResp
-		r.value, r.err = vm.Run(`Run()`)
-		respCh <- r
+		var result transaction.Result
+		result.Name = t.config.Name
+		result.Driver = "javascript"
+		result.Time = time.Now()
+		result.Metadata = t.config.Metadata
+
+		switch t.Config().CallBack == nil {
+
+		// no async callback response
+		case true:
+			value, err := vm.Run(fmt.Sprintf(`Run({UUID:"%s", CallbackAddress: ""})`, uuid))
+			if err != nil {
+				result.Failed = true
+				result.Error = err
+				respCh <- result
+				return
+			}
+
+			rs, err := value.ToString()
+			if err != nil {
+				result.Message = "failed to load response from javascript vm"
+				result.Failed = true
+				result.Error = err
+				respCh <- result
+				return
+			}
+
+			var txRes jsResult
+			err = json.Unmarshal([]byte(rs), &txRes)
+			if err != nil {
+				result.Message = "failed to deserialize result from javascript vm for transaction Run()"
+				result.Data = rs
+				result.Failed = true
+				result.Error = err
+				respCh <- result
+				return
+			}
+			result.Data = txRes.Data
+			result.Message = txRes.Message
+			result.Failed = txRes.Failed
+			respCh <- result
+			return
+
+		// async callback response
+		case false:
+			value, err := vm.Run(fmt.Sprintf(`Run({UUID:"%s", CallbackAddress: "%s"})`, uuid, handle.Address))
+			if err != nil {
+				result.Failed = true
+				result.Error = err
+				respCh <- result
+				return
+			}
+
+			rs, err := value.ToString()
+			if err != nil {
+				result.Message = "failed to load response from javascript vm for transaction Run()"
+				result.Failed = true
+				result.Error = err
+				respCh <- result
+				return
+			}
+
+			var txRes jsResult
+			err = json.Unmarshal([]byte(rs), &txRes)
+			if err != nil {
+				result.Message = "failed to deserialize result from javascript vm for transaction Run()"
+				result.Data = rs
+				result.Failed = true
+				result.Error = err
+				respCh <- result
+				return
+			}
+			result.Data = txRes.Data
+			result.Message = txRes.Message
+			result.Failed = txRes.Failed
+
+			// wait for callback response or timeout
+			var hr callback.Response
+			select {
+			case hr = <-handle.Response:
+				if hr.Error != nil {
+					result.Failed = true
+					result.Error = err
+					respCh <- result
+					return
+				}
+			case <-ctx.Done():
+				return
+			}
+
+			data, _ := json.Marshal(&struct{ Data string }{string(hr.Data)})
+			value, err = vm.Run(`Handle(` + string(data) + `)`)
+			if err != nil {
+				result.Message = "failed to run callback Handle()"
+				result.Failed = true
+				result.Error = err
+				respCh <- result
+				return
+			}
+
+			rs, err = value.ToString()
+			if err != nil {
+				result.Message = "failed to load response from javascript vm for callback Handle()"
+				result.Failed = true
+				result.Error = err
+				result.Data = value.String()
+				respCh <- result
+				return
+			}
+
+			var cbRes jsResult
+			err = json.Unmarshal([]byte(rs), &cbRes)
+			if err != nil {
+				result.Message = "failed to deserialize result from javascript vm for callback Handle()"
+				result.Data = rs
+				result.Failed = true
+				result.Error = err
+				respCh <- result
+				return
+			}
+			result.Data = cbRes.Data
+			result.Message = cbRes.Message
+			result.Failed = cbRes.Failed
+			respCh <- result
+			return
+		}
 	}()
 
 	// Handle the results of execution and cancellation
-	var r vmResp
-	timer := time.NewTimer(t.timeout)
+	var r transaction.Result
 	select {
 	case r = <-respCh:
-		timer.Stop()
-		result.DurationSeconds = time.Since(result.Time).Seconds()
-		if r.err != nil {
-			result.Failed = true
-			result.Error = r.err
-			return result
-		}
-
-		rs, err := r.value.ToString()
-		if err != nil {
-			result.Message = "failed to load response from javascript vm"
-			result.Failed = true
-			result.Error = err
-			return result
-		}
-
-		var jsRes jsResult
-		err = json.Unmarshal([]byte(rs), &jsRes)
-		if err != nil {
-			result.Message = "failed to deserialize result from javascript vm"
-			result.Failed = true
-			result.Error = err
-			return result
-		}
-		result.Data = jsRes.Data
-		result.Message = jsRes.Message
-		result.Failed = jsRes.Failed
-
-	case <-timer.C:
-		timer.Stop()
+	case <-ctx.Done():
 		vm.Interrupt <- func() {
 			panic("stop")
 		}
-		result.DurationSeconds = time.Since(result.Time).Seconds()
-		result.Error = fmt.Errorf("timed out running transaction, timeout: %.2f seconds", t.timeout.Seconds())
+		r.Error = fmt.Errorf("timed out running transaction after: %.2f seconds", t.timeout.Seconds())
 	}
 
-	return result
-
+	r.DurationSeconds = time.Since(result.Time).Seconds()
+	return r
 }
