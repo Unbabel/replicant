@@ -2,6 +2,7 @@ package log
 
 import (
 	"os"
+	"sync"
 
 	"github.com/brunotm/log"
 )
@@ -17,11 +18,15 @@ func Init(level string) (err error) {
 		return err
 	}
 
-	config := log.DefaultConfig
-	config.Level = l
-	config.EnableSampling = false
-	config.CallerSkip = 1
-	logger = log.New(os.Stdout, config)
+	var once sync.Once
+
+	once.Do(func() {
+		config := log.DefaultConfig
+		config.Level = l
+		config.EnableSampling = false
+		config.CallerSkip = 1
+		logger = log.New(os.Stdout, config)
+	})
 	return nil
 }
 

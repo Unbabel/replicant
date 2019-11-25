@@ -111,6 +111,14 @@ func (e Entry) Null(key string) (entry Entry) {
 	return e
 }
 
+// Error adds the given error key/value
+func (e Entry) Error(key string, value error) (entry Entry) {
+	if e.o.enc != nil {
+		e.o.Error(key, value)
+	}
+	return e
+}
+
 // Object creates a json object
 func (e Entry) Object(key string, fn func(Object)) (entry Entry) {
 	if e.o.enc != nil {

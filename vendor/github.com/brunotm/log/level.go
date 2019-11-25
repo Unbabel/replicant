@@ -1,5 +1,11 @@
 package log
 
+import (
+	"errors"
+
+	"strings"
+)
+
 /*
    Copyright 2019 Bruno Moura <brunotm@gmail.com>
 
@@ -43,6 +49,24 @@ func (l Level) String() (level string) {
 	case ERROR:
 		return "error"
 	default:
-		return "unknow"
+		return "unknown"
+	}
+}
+
+// ParseLevel parses the log level from a string
+func ParseLevel(level string) (l Level, err error) {
+	level = strings.ToLower(level)
+
+	switch level {
+	case "debug":
+		return DEBUG, nil
+	case "info":
+		return INFO, nil
+	case "warn":
+		return WARN, nil
+	case "error":
+		return ERROR, nil
+	default:
+		return Level(0), errors.New("unknown log level")
 	}
 }
