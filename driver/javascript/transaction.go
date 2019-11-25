@@ -75,6 +75,11 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 
 	}
 
+	result.Name = t.config.Name
+	result.Driver = "javascript"
+	result.Time = time.Now()
+	result.Metadata = t.config.Metadata
+
 	// copy the vm to avoid problems such as cancellation and GC
 	// Use a channel to read the values of execution from the running
 	// goroutine needed due to the otto cancelation mechanism which needs a panic
@@ -88,12 +93,6 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 		defer func() {
 			recover()
 		}()
-
-		var result transaction.Result
-		result.Name = t.config.Name
-		result.Driver = "javascript"
-		result.Time = time.Now()
-		result.Metadata = t.config.Metadata
 
 		switch t.Config().CallBack == nil {
 
@@ -218,16 +217,15 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 	}()
 
 	// Handle the results of execution and cancellation
-	var r transaction.Result
 	select {
-	case r = <-respCh:
+	case result = <-respCh:
 	case <-ctx.Done():
 		vm.Interrupt <- func() {
 			panic("stop")
 		}
-		r.Error = fmt.Errorf("timed out running transaction after: %.2f seconds", t.timeout.Seconds())
+		result.Error = fmt.Errorf("timed out running transaction after: %.2f seconds", t.timeout.Seconds())
 	}
 
-	r.DurationSeconds = time.Since(result.Time).Seconds()
-	return r
+	result.DurationSeconds = time.Since(result.Time).Seconds()
+	return result
 }
