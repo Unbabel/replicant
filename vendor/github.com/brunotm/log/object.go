@@ -67,6 +67,19 @@ func (o Object) Null(key string) (object Object) {
 	return o
 }
 
+// Error adds a error value for the given key
+func (o Object) Error(key string, err error) (object Object) {
+	o.enc.addKey(key)
+
+	var s string
+	if err != nil {
+		s = err.Error()
+	}
+	o.enc.AppendString(s)
+
+	return o
+}
+
 // Object creates a json object
 func (o Object) Object(key string, fn func(Object)) (object Object) {
 	o.enc.addKey(key)
