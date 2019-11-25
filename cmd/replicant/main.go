@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/brunotm/log"
 	"github.com/brunotm/replicant/api"
 	"github.com/brunotm/replicant/config"
 	goDriver "github.com/brunotm/replicant/driver/go"
@@ -18,6 +17,7 @@ import (
 	"github.com/brunotm/replicant/emitter/prometheus"
 	"github.com/brunotm/replicant/emitter/stdout"
 	"github.com/brunotm/replicant/internal/webhook"
+	"github.com/brunotm/replicant/log"
 	"github.com/brunotm/replicant/manager"
 	"github.com/brunotm/replicant/server"
 	"github.com/brunotm/replicant/store"
@@ -48,9 +48,7 @@ func main() {
 
 		err = writeConfigFile(cfg, defaultConfigFile)
 		if err != nil {
-			log.Error("could not write config file").
-				String("file", defaultConfigFile).
-				String("error", err.Error()).Log()
+			fmt.Printf("could not write config file: %s, error: %s\n", defaultConfigFile, err)
 			os.Exit(1)
 		}
 
@@ -61,11 +59,14 @@ func main() {
 	if *configFile != "" {
 		cfg, err = readConfigFile(*configFile)
 		if err != nil {
-			log.Error("could not read config file").
-				String("path", *configFile).
-				String("error", err.Error()).Log()
+			fmt.Printf("could not read config file: %s, error: %s\n", *configFile, err)
 			os.Exit(1)
 		}
+	}
+
+	if err = log.Init(cfg.LogLevel); err != nil {
+		fmt.Printf("error initializing log: %s\n", err)
+		os.Exit(1)
 	}
 
 	// Initialize the transaction store
