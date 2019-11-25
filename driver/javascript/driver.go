@@ -104,6 +104,10 @@ func New() (d *Driver, err error) {
 		defer client.CloseIdleConnections()
 
 		resp, err := client.Do(req)
+		log.Debug("http request").String("url", hro.URL).
+			String("method", hro.Method).Bool("skip_ssl_verify", hro.SSLSkipVerify).
+			String("status", resp.Status).Error("error", err).Log()
+
 		if err != nil {
 			r, _ := d.toJSvalue(&httpResponse{Error: fmt.Errorf("request failed: %s", err)})
 			return r
