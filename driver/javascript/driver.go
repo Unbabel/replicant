@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/brunotm/log"
+	"github.com/brunotm/replicant/log"
 	"github.com/brunotm/replicant/transaction"
 	"github.com/robertkrimen/otto"
 )

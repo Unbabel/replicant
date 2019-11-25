@@ -26,9 +26,9 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/brunotm/log"
 	"github.com/brunotm/replicant/driver"
 	"github.com/brunotm/replicant/internal/scheduler"
+	"github.com/brunotm/replicant/log"
 	"github.com/brunotm/replicant/store"
 	"github.com/brunotm/replicant/transaction"
 	"github.com/brunotm/replicant/transaction/callback"
