@@ -1,7 +1,6 @@
 package store
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -12,7 +11,7 @@ import (
 var (
 	registry = sync.Map{}
 	// ErrTransactionNotFound transaction not found
-	ErrTransactionNotFound = errors.New("transaction not found")
+	ErrTransactionNotFound = fmt.Errorf("transaction not found")
 )
 
 // Store for transaction configurations

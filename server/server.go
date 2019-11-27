@@ -74,7 +74,7 @@ func New(config Config, m *manager.Manager) (server *Server, err error) {
 // Start serving
 func (s *Server) Start() (err error) {
 	if err = s.http.ListenAndServe(); err != http.ErrServerClosed {
-		return err
+		return fmt.Errorf("server: error starting http: %w", err)
 	}
 	return nil
 }

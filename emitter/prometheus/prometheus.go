@@ -90,7 +90,7 @@ func (e *Emitter) Emit(result transaction.Result) {
 func New(c Config, router *httprouter.Router) (emitter *Emitter, err error) {
 
 	if !strings.HasPrefix(c.Path, "/") {
-		return nil, fmt.Errorf("url path must start with /")
+		return nil, fmt.Errorf("emitter/prometheus: url path must start with /")
 	}
 
 	emitter = &Emitter{}

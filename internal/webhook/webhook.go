@@ -18,7 +18,6 @@ package webhook
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -83,10 +82,10 @@ func (l *Listener) Listen(ctx context.Context) (h *callback.Handle, err error) {
 	u := ctx.Value("transaction_uuid")
 	uuid, ok := u.(string)
 	if !ok {
-		return nil, fmt.Errorf("transaction_uuid not found in context")
+		return nil, fmt.Errorf("callback/webhook: transaction_uuid not found in context")
 	}
 	if _, ok = l.handles.Load(uuid); ok {
-		return nil, errors.New("callback for id already exists")
+		return nil, fmt.Errorf("callback/webhook: callback for id already exists")
 	}
 
 	whandle := handle{}
@@ -106,7 +105,7 @@ func (l *Listener) Listen(ctx context.Context) (h *callback.Handle, err error) {
 			if w, ok := l.handles.Load(uuid); ok {
 				whcb := w.(handle)
 				whcb.resp <- callback.Response{
-					Error: fmt.Errorf("timeout waiting for webhook response on %s", address)}
+					Error: fmt.Errorf("callback/webhook: timeout waiting for webhook %s", uuid)}
 				l.handles.Delete(uuid)
 				close(whandle.resp)
 				close(whandle.done)

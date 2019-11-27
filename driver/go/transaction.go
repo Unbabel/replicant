@@ -66,13 +66,13 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 		listener, ok := ctx.Value(t.config.CallBack.Type).(callback.Listener)
 		if !ok {
 			result.Failed = true
-			result.Message = "callback not found or does not implement callback.Listener interface"
+			result.Error = fmt.Errorf("driver/javascript: callback not found or does not implement callback.Listener interface")
 		}
 
 		handle, err = listener.Listen(ctx)
 		if err != nil {
 			result.Failed = true
-			result.Message = fmt.Sprintf("could not handle callback: %s", err)
+			result.Error = fmt.Errorf("driver/javascript: error handling callback: %w", err)
 			return result
 		}
 
@@ -84,7 +84,7 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 	result.DurationSeconds = time.Since(result.Time).Seconds()
 
 	if err != nil {
-		result.Error = err
+		result.Error = fmt.Errorf("driver/go: error running transaction: %w", err)
 		result.Message = m
 		result.Failed = true
 		return result
@@ -102,7 +102,7 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 	result.DurationSeconds = time.Since(result.Time).Seconds()
 
 	if resp.Error != nil {
-		result.Error = err
+		result.Error = fmt.Errorf("driver/go: error from callback listener: %w", err)
 		result.Data = string(resp.Data)
 		result.Failed = true
 		return result
@@ -110,6 +110,7 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 
 	m, d, err = t.callbackHandler(ctx, resp.Data)
 	if err != nil {
+		err = fmt.Errorf("driver/go: error running callback handler: %w", err)
 		result.Failed = true
 	}
 

@@ -19,7 +19,6 @@ package manager
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"math/rand"
 	"sync"
@@ -83,13 +82,13 @@ func New(s store.Store, d ...driver.Driver) (manager *Manager) {
 
 		if err != nil {
 			log.Error("error creating transaction").
-				String("name", name).String("error", err.Error()).Log()
+				String("name", name).Error("error", err).Log()
 			return true
 		}
 
 		if err = manager.schedule(tx); err != nil {
 			log.Error("error scheduling transaction").
-				String("name", name).String("error", err.Error()).Log()
+				String("name", name).Error("error", err).Log()
 			return true
 		}
 
@@ -115,12 +114,12 @@ func (m *Manager) New(config transaction.Config) (tx transaction.Transaction, er
 	d, ok := m.drivers.Load(config.Driver)
 
 	if !ok {
-		return nil, fmt.Errorf("transaction driver not registered: %s", config.Driver)
+		return nil, fmt.Errorf("manager: transaction driver %s not registered", config.Driver)
 	}
 
 	if config.Inputs != nil {
 		if config, err = parseTemplate(config); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("manager: error parsing transaction template: %w", err)
 		}
 	}
 
@@ -180,18 +179,18 @@ func (m *Manager) schedule(tx transaction.Transaction) (err error) {
 func (m *Manager) Add(tx transaction.Transaction) (err error) {
 
 	if tx == nil {
-		return fmt.Errorf("invalid transaction: %s", tx)
+		return fmt.Errorf("manager: invalid null transaction")
 	}
 
 	config := tx.Config()
 
 	ok, err := m.transactions.Has(config.Name)
 	if err != nil {
-		return err
+		return fmt.Errorf("manager: %w", err)
 	}
 
 	if ok {
-		return errors.New("transaction already exists")
+		return fmt.Errorf("manager: transaction already exists")
 	}
 
 	if config.Schedule != "" {
@@ -218,7 +217,7 @@ func (m *Manager) AddFromConfig(config transaction.Config) (err error) {
 func (m *Manager) RemoveTransaction(name string) (err error) {
 
 	if err = m.transactions.Delete(name); err != nil {
-		return err
+		return fmt.Errorf("manager: %w", err)
 	}
 
 	m.scheduler.RemoveTask(name)
@@ -243,7 +242,7 @@ func (m *Manager) AddEmitterFunc(emitter func(result transaction.Result)) {
 func (m *Manager) GetTransaction(name string) (tx transaction.Transaction, err error) {
 	config, err := m.transactions.Get(name)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("manager: %w", err)
 	}
 
 	return m.New(config)
@@ -269,7 +268,7 @@ func (m *Manager) Run(ctx context.Context, name string) (result transaction.Resu
 func (m *Manager) GetResult(name string) (result transaction.Result, err error) {
 	v, ok := m.results.Load(name)
 	if !ok {
-		return result, errors.New("no results found for the specified transaction")
+		return result, fmt.Errorf("manager: no results found")
 	}
 
 	return v.(transaction.Result), nil

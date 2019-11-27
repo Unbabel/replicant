@@ -18,15 +18,15 @@ package scheduler
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/robfig/cron/v3"
 )
 
 var (
-	ErrorTaskAlreadyExists = errors.New("task already exists")
-	ErrorNoSuchTask        = errors.New("no such task")
+	ErrorTaskAlreadyExists = fmt.Errorf("task already exists")
+	ErrorNoSuchTask        = fmt.Errorf("no such task")
 )
 
 // Task represents a test task to be scheduled
@@ -93,7 +93,7 @@ func (s *Scheduler) AddTask(name, schedule string, task Task) (err error) {
 
 	var id cron.EntryID
 	if id, err = s.cron.AddJob(schedule, task); err != nil {
-		return err
+		return fmt.Errorf("scheduler: error adding job: %w", err)
 	}
 
 	s.tasks[name] = Entry{Name: name, ID: int(id), Schedule: schedule}

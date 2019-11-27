@@ -18,7 +18,7 @@ package api
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -39,7 +39,7 @@ func AddTransaction(srv *server.Server) (handle server.Handler) {
 		var buf []byte
 
 		if buf, err = ioutil.ReadAll(r.Body); err != nil {
-			httpError(w, err, http.StatusBadRequest)
+			httpError(w, fmt.Errorf("error reading request body: %w", err), http.StatusBadRequest)
 			return
 		}
 
@@ -48,16 +48,16 @@ func AddTransaction(srv *server.Server) (handle server.Handler) {
 		switch r.Header.Get("Content-Type") {
 		case "application/json":
 			if err = json.Unmarshal(buf, &config); err != nil {
-				httpError(w, err, http.StatusBadRequest)
+				httpError(w, fmt.Errorf("error deserializing json request body: %w", err), http.StatusBadRequest)
 				return
 			}
 		case "application/yaml":
 			if err = yaml.Unmarshal(buf, &config); err != nil {
-				httpError(w, err, http.StatusBadRequest)
+				httpError(w, fmt.Errorf("error deserializing yaml request body: %w", err), http.StatusBadRequest)
 				return
 			}
 		default:
-			httpError(w, errors.New("unknown Content-Type"), http.StatusBadRequest)
+			httpError(w, fmt.Errorf("unknown Content-Type"), http.StatusBadRequest)
 			return
 		}
 
@@ -70,7 +70,7 @@ func AddTransaction(srv *server.Server) (handle server.Handler) {
 		result.Message = "transaction created"
 		buf, err = json.Marshal(&result)
 		if err != nil {
-			httpError(w, err, http.StatusInternalServerError)
+			httpError(w, fmt.Errorf("error serializing results: %w", err), http.StatusInternalServerError)
 		}
 
 		w.WriteHeader(http.StatusCreated)
@@ -99,7 +99,7 @@ func GetTransaction(srv *server.Server) (handle server.Handler) {
 		result.Data = []transaction.Config{config}
 		buf, err := json.Marshal(&result)
 		if err != nil {
-			httpError(w, err, http.StatusInternalServerError)
+			httpError(w, fmt.Errorf("error serializing results: %w", err), http.StatusInternalServerError)
 		}
 
 		w.WriteHeader(http.StatusOK)
@@ -118,7 +118,7 @@ func GetTransactions(srv *server.Server) (handle server.Handler) {
 		result.Data = srv.Manager().GetTransactionsConfig()
 		buf, err := json.Marshal(&result)
 		if err != nil {
-			httpError(w, err, http.StatusInternalServerError)
+			httpError(w, fmt.Errorf("error serializing results: %w", err), http.StatusInternalServerError)
 		}
 
 		w.WriteHeader(http.StatusOK)
@@ -146,7 +146,7 @@ func RemoveTransaction(srv *server.Server) (handle server.Handler) {
 		result.Message = "removed"
 		buf, err := json.Marshal(&result)
 		if err != nil {
-			httpError(w, err, http.StatusInternalServerError)
+			httpError(w, fmt.Errorf("error serializing results: %w", err), http.StatusInternalServerError)
 		}
 
 		w.WriteHeader(http.StatusOK)
