@@ -19,6 +19,7 @@ package prometheus
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"strings"
 
@@ -32,13 +33,9 @@ import (
 // Emitter for elasticsearch
 type Emitter struct {
 	config         Config
-	tests          prometheus.Counter
+	runs           prometheus.Counter
 	failures       prometheus.Counter
-	stateGauge     *prometheus.GaugeVec
-	retriesGauge   *prometheus.GaugeVec
 	latencyGauge   *prometheus.GaugeVec
-	stateSummary   *prometheus.SummaryVec
-	retriesSummary *prometheus.SummaryVec
 	latencySummary *prometheus.SummaryVec
 }
 
@@ -56,33 +53,29 @@ func (e *Emitter) Close() {}
 
 // Emit results
 func (e *Emitter) Emit(result transaction.Result) {
-	if e.config.Gauges {
-		e.latencyGauge.With(result.Metadata).Set(result.DurationSeconds)
-		e.retriesGauge.With(result.Metadata).Set(float64(result.RetryCount))
 
-		switch result.Failed {
-		case true:
-			e.stateGauge.With(result.Metadata).Set(1)
-		case false:
-			e.stateGauge.With(result.Metadata).Set(0)
-		}
+	labels := make(map[string]string)
+	for k, v := range result.Metadata {
+		labels[k] = v
+	}
+
+	e.runs.Add(1)
+	switch result.Failed {
+	case true:
+		e.failures.Add(1)
+		labels["status"] = "failed"
+	case false:
+		labels["status"] = "passed"
+	}
+
+	labels["retries"] = strconv.Itoa(result.RetryCount)
+
+	if e.config.Gauges {
+		e.latencyGauge.With(labels).Set(result.DurationSeconds)
 	}
 
 	if e.config.Summaries {
-		e.latencySummary.With(result.Metadata).Observe(result.DurationSeconds)
-		e.retriesSummary.With(result.Metadata).Observe(float64(result.RetryCount))
-
-		switch result.Failed {
-		case true:
-			e.stateSummary.With(result.Metadata).Observe(1)
-		case false:
-			e.stateSummary.With(result.Metadata).Observe(0)
-		}
-	}
-
-	e.tests.Add(1)
-	if result.Failed {
-		e.failures.Add(1)
+		e.latencySummary.With(labels).Observe(result.DurationSeconds)
 	}
 }
 
@@ -95,8 +88,9 @@ func New(c Config, router *httprouter.Router) (emitter *Emitter, err error) {
 
 	emitter = &Emitter{}
 	emitter.config = c
+	labels := append(c.Labels, "status", "retries")
 
-	emitter.tests = promauto.NewCounter(prometheus.CounterOpts{
+	emitter.runs = promauto.NewCounter(prometheus.CounterOpts{
 		Namespace: "replicant",
 		Subsystem: "total",
 		Name:      "runs",
@@ -111,52 +105,22 @@ func New(c Config, router *httprouter.Router) (emitter *Emitter, err error) {
 	})
 
 	if c.Gauges {
-		emitter.stateGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: "replicant",
-			Subsystem: "current",
-			Name:      "state",
-			Help:      "transaction result state"},
-			c.Labels)
-
-		emitter.retriesGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: "replicant",
-			Subsystem: "current",
-			Name:      "retries",
-			Help:      "transaction retries"},
-			c.Labels)
-
 		emitter.latencyGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: "replicant",
-			Subsystem: "current",
+			Subsystem: "test",
 			Name:      "latency",
 			Help:      "transaction latencies"},
-			c.Labels)
+			labels)
 	}
 
 	if c.Summaries {
-		emitter.stateSummary = promauto.NewSummaryVec(prometheus.SummaryOpts{
-			Namespace:  "replicant",
-			Subsystem:  "summary",
-			Name:       "state",
-			Help:       "transaction result state",
-			Objectives: c.SummaryObjectives},
-			c.Labels)
-
-		emitter.retriesSummary = promauto.NewSummaryVec(prometheus.SummaryOpts{
-			Namespace:  "replicant",
-			Subsystem:  "summary",
-			Name:       "retries",
-			Help:       "transaction retries",
-			Objectives: c.SummaryObjectives},
-			c.Labels)
-
 		emitter.latencySummary = promauto.NewSummaryVec(prometheus.SummaryOpts{
 			Namespace:  "replicant",
-			Subsystem:  "summary",
-			Name:       "latency",
+			Subsystem:  "test",
+			Name:       "latency_summary",
 			Help:       "transaction latencies",
 			Objectives: c.SummaryObjectives},
-			c.Labels)
+			labels)
 	}
 
 	router.Handler(http.MethodGet, c.Path, promhttp.Handler())
