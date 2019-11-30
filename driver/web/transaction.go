@@ -64,7 +64,7 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 
 	cdpAddr, err := t.resolveAddr()
 	if err != nil {
-		result.Error = err
+		result.Error = fmt.Errorf("driver/web: %w", err)
 		result.Message = "failed to handle cpd url"
 		return result
 	}
@@ -78,7 +78,7 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 	result.DurationSeconds = time.Since(result.Time).Seconds()
 
 	if err != nil {
-		result.Error = err
+		result.Error = fmt.Errorf("driver/web: error running transaction script: %w", err)
 		result.Failed = true
 	}
 
@@ -87,7 +87,7 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 	}
 
 	if err = json.Unmarshal(r, &result); err != nil {
-		result.Error = fmt.Errorf("errors: %s, %s", result.Error, err)
+		result.Error = fmt.Errorf("driver/web: error deserializing result data: %w", err)
 		result.Data = string(r)
 	}
 
@@ -113,7 +113,7 @@ func (t *Transaction) resolveAddr() (a string, err error) {
 	// resolve server ip addr
 	ips, err := net.LookupIP(serverHostname)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error resolving cpd_server name: %w", err)
 	}
 
 	if len(ips) == 0 {

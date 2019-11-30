@@ -18,7 +18,7 @@ package web
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"time"
 
 	"github.com/brunotm/replicant/transaction"
@@ -46,7 +46,7 @@ func (d *Driver) New(config transaction.Config) (tx transaction.Transaction, err
 	if config.Timeout != "" {
 		txn.timeout, err = time.ParseDuration(config.Timeout)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("driver/go: error parsing timeout: %w", err)
 		}
 	}
 
@@ -55,19 +55,19 @@ func (d *Driver) New(config transaction.Config) (tx transaction.Transaction, err
 
 	_, err = i.Eval(config.Script)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("driver/go: error initializing transaction script: %w", err)
 	}
 
 	v, err := i.Eval("transaction.Run")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("driver/go: error loading transaction program code: %w", err)
 	}
 
 	var ok bool
 	txn.transaction, ok = v.Interface().(func(context.Context) (message, data string, err error))
 	if !ok || txn.transaction == nil {
-		return nil, errors.New(
-			`transaction.Run doesn't implement "func(context.Context) (message, data string, err error)" signature`)
+		return nil, fmt.Errorf(
+			`driver/go: transaction.Run doesn't implement "func(context.Context) (message, data string, err error)" signature`)
 	}
 
 	if config.CallBack != nil {
@@ -76,19 +76,19 @@ func (d *Driver) New(config transaction.Config) (tx transaction.Transaction, err
 
 		_, err = i.Eval(config.CallBack.Script)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("driver/go: error initializing callback script: %w", err)
 		}
 
 		var ok bool
 		v, err := i.Eval("callback.Handle")
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("driver/go: error loading callback program code: %w", err)
 		}
 
 		txn.callbackHandler, ok = v.Interface().(func(context.Context, []byte) (message, data string, err error))
 		if !ok {
-			return nil, errors.New(
-				`callback.Handle doesn't implement "func(context.Context, []byte) (message, data string, err error)" signature`)
+			return nil, fmt.Errorf(
+				`driver/go: callback.Handle doesn't implement "func(context.Context, []byte) (message, data string, err error)" signature`)
 		}
 	}
 

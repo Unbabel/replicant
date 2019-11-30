@@ -18,7 +18,7 @@ package transaction
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"time"
 )
 
@@ -70,7 +70,7 @@ func (r *Result) UnmarshalJSON(data []byte) error {
 	}
 
 	if aux.Error != "" {
-		r.Error = errors.New(aux.Error)
+		r.Error = fmt.Errorf(aux.Error)
 	}
 
 	return nil

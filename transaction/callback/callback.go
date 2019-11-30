@@ -56,7 +56,7 @@ func Register(typ string, listener Listener) (err error) {
 	defer listenersMtx.Unlock()
 
 	if _, ok := listeners[typ]; ok {
-		return fmt.Errorf("duplicate listener for type %s", typ)
+		return fmt.Errorf("callback: duplicate listener for type %s", typ)
 	}
 
 	listeners[typ] = listener
@@ -70,7 +70,7 @@ func GetListener(typ string) (listener Listener, err error) {
 
 	handler, ok := listeners[typ]
 	if !ok {
-		return nil, fmt.Errorf("no registered listener for type %s", typ)
+		return nil, fmt.Errorf("callback: no registered listener for type %s", typ)
 	}
 
 	return handler, nil

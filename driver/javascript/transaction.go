@@ -47,7 +47,7 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 	uuid, ok := u.(string)
 	if !ok {
 		result.Failed = true
-		result.Error = fmt.Errorf("transaction_uuid not found in context")
+		result.Error = fmt.Errorf("driver/javascript: transaction_uuid not found in context")
 	}
 
 	if t.timeout > 0 {
@@ -63,13 +63,13 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 		listener, ok := ctx.Value(t.config.CallBack.Type).(callback.Listener)
 		if !ok {
 			result.Failed = true
-			result.Error = fmt.Errorf("callback not found or does not implement callback.Listener interface")
+			result.Error = fmt.Errorf("driver/javascript: callback not found or does not implement callback.Listener interface")
 		}
 
 		handle, err = listener.Listen(ctx)
 		if err != nil {
 			result.Failed = true
-			result.Error = fmt.Errorf("could not handle callback: %s", err)
+			result.Error = fmt.Errorf("driver/javascript: error handling callback: %w", err)
 			return result
 		}
 
@@ -101,16 +101,15 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 			value, err := vm.Run(fmt.Sprintf(`Run({UUID:"%s", CallbackAddress: ""})`, uuid))
 			if err != nil {
 				result.Failed = true
-				result.Error = err
+				result.Error = fmt.Errorf("driver/javascript: error running transaction: %w", err)
 				respCh <- result
 				return
 			}
 
 			rs, err := value.ToString()
 			if err != nil {
-				result.Message = "failed to load response from javascript vm"
 				result.Failed = true
-				result.Error = err
+				result.Error = fmt.Errorf("driver/javascript: error loading value from transaction response: %w", err)
 				respCh <- result
 				return
 			}
@@ -118,10 +117,9 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 			var txRes jsResult
 			err = json.Unmarshal([]byte(rs), &txRes)
 			if err != nil {
-				result.Message = "failed to deserialize result from javascript vm for transaction Run()"
 				result.Data = rs
 				result.Failed = true
-				result.Error = err
+				result.Error = fmt.Errorf("driver/javascript: error deserializing transaction response: %w", err)
 				respCh <- result
 				return
 			}
@@ -136,16 +134,15 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 			value, err := vm.Run(fmt.Sprintf(`Run({UUID:"%s", CallbackAddress: "%s"})`, uuid, handle.Address))
 			if err != nil {
 				result.Failed = true
-				result.Error = err
+				result.Error = fmt.Errorf("driver/javascript: error running transaction: %w", err)
 				respCh <- result
 				return
 			}
 
 			rs, err := value.ToString()
 			if err != nil {
-				result.Message = "failed to load response from javascript vm for transaction Run()"
 				result.Failed = true
-				result.Error = err
+				result.Error = fmt.Errorf("driver/javascript: error loading value from transaction response: %w", err)
 				respCh <- result
 				return
 			}
@@ -153,10 +150,9 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 			var txRes jsResult
 			err = json.Unmarshal([]byte(rs), &txRes)
 			if err != nil {
-				result.Message = "failed to deserialize result from javascript vm for transaction Run()"
 				result.Data = rs
 				result.Failed = true
-				result.Error = err
+				result.Error = fmt.Errorf("driver/javascript: error deserializing transaction response: %w", err)
 				respCh <- result
 				return
 			}
@@ -170,7 +166,7 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 			case hr = <-handle.Response:
 				if hr.Error != nil {
 					result.Failed = true
-					result.Error = err
+					result.Error = fmt.Errorf("driver/javascript: error from callback listener: %w", err)
 					respCh <- result
 					return
 				}
@@ -181,18 +177,16 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 			data, _ := json.Marshal(&struct{ Data string }{string(hr.Data)})
 			value, err = vm.Run(`Handle(` + string(data) + `)`)
 			if err != nil {
-				result.Message = "failed to run callback Handle()"
 				result.Failed = true
-				result.Error = err
+				result.Error = fmt.Errorf("driver/javascript: error running callback handler: %w", err)
 				respCh <- result
 				return
 			}
 
 			rs, err = value.ToString()
 			if err != nil {
-				result.Message = "failed to load response from javascript vm for callback Handle()"
 				result.Failed = true
-				result.Error = err
+				result.Error = fmt.Errorf("driver/javascript: error loading value from callback handler response: %w", err)
 				result.Data = value.String()
 				respCh <- result
 				return
@@ -201,10 +195,9 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 			var cbRes jsResult
 			err = json.Unmarshal([]byte(rs), &cbRes)
 			if err != nil {
-				result.Message = "failed to deserialize result from javascript vm for callback Handle()"
 				result.Data = rs
 				result.Failed = true
-				result.Error = err
+				result.Error = fmt.Errorf("driver/javascript: error deserializing callback handler response: %w", err)
 				respCh <- result
 				return
 			}
@@ -223,7 +216,7 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 		vm.Interrupt <- func() {
 			panic("stop")
 		}
-		result.Error = fmt.Errorf("timed out running transaction after: %.2f seconds", t.timeout.Seconds())
+		result.Error = fmt.Errorf("driver/javascript: timed out running transaction after: %.2f seconds", t.timeout.Seconds())
 	}
 
 	result.DurationSeconds = time.Since(result.Time).Seconds()

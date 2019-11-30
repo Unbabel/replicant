@@ -19,6 +19,7 @@ package elasticsearch
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -82,7 +83,7 @@ func New(config Config) (emitter *Emitter, err error) {
 
 	emitter.client, err = elastic.NewSimpleClient(opts...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("emitter/elasticsearch: error creating client: %w", err)
 	}
 
 	emitter.index = config.Index
@@ -103,7 +104,7 @@ func New(config Config) (emitter *Emitter, err error) {
 
 	emitter.bulkProcessor, err = bps.Do(context.Background())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("emitter/elasticsearch: error creating bulk processor: %w", err)
 	}
 
 	emitter.bulkProcessor.Start(context.Background())

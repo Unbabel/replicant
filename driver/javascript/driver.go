@@ -27,21 +27,27 @@ func New() (d *Driver, err error) {
 	d.vm = otto.New()
 
 	// add logging to js vm
-	d.vm.Set("replicant_log", func(call otto.FunctionCall) otto.Value {
+	err = d.vm.Set("replicant_log", func(call otto.FunctionCall) otto.Value {
 		log.Info(call.Argument(0).String()).String("driver", "javascript").Log()
 		return otto.Value{}
 	})
+	if err != nil {
+		return nil, fmt.Errorf("driver/javascript: error setting replicant_log: %w", err)
+	}
 
 	// add sleep to js vm
-	d.vm.Set("replicant_sleep", func(call otto.FunctionCall) otto.Value {
+	err = d.vm.Set("replicant_sleep", func(call otto.FunctionCall) otto.Value {
 		ms, _ := call.Argument(0).ToInteger()
 		log.Debug("sleeping").String("driver", "javascript").Int("milliseconds", ms).Log()
 		time.Sleep(time.Duration(ms) * time.Millisecond)
 		return otto.Value{}
 	})
+	if err != nil {
+		return nil, fmt.Errorf("driver/javascript: error setting replicant_sleep: %w", err)
+	}
 
 	// add http request capabilities to js vm
-	d.vm.Set("replicant_http_do", func(call otto.FunctionCall) otto.Value {
+	err = d.vm.Set("replicant_http_do", func(call otto.FunctionCall) otto.Value {
 		jsonHRO := call.Argument(0).String()
 		if jsonHRO == "undefined" {
 			r, _ := d.toJSvalue(&httpResponse{Error: fmt.Errorf("no http request was specified")})
@@ -50,7 +56,7 @@ func New() (d *Driver, err error) {
 		hro := httpRequest{}
 
 		if err := json.Unmarshal([]byte(jsonHRO), &hro); err != nil {
-			r, _ := d.toJSvalue(&httpResponse{Error: fmt.Errorf("error deserializing request")})
+			r, _ := d.toJSvalue(&httpResponse{Error: fmt.Errorf("error deserializing request: %w", err)})
 			return r
 		}
 
@@ -71,7 +77,7 @@ func New() (d *Driver, err error) {
 
 		u, err := url.ParseRequestURI(hro.URL)
 		if err != nil {
-			r, _ := d.toJSvalue(&httpResponse{Error: fmt.Errorf("failed to parse request URL")})
+			r, _ := d.toJSvalue(&httpResponse{Error: fmt.Errorf("error parsing request url: %w", err)})
 			return r
 		}
 
@@ -86,7 +92,7 @@ func New() (d *Driver, err error) {
 
 		req, err := http.NewRequest(hro.Method, u.String(), body)
 		if err != nil {
-			r, _ := d.toJSvalue(&httpResponse{Error: fmt.Errorf("failed to create HTTP request: %s", err)})
+			r, _ := d.toJSvalue(&httpResponse{Error: fmt.Errorf("error creating http request: %w", err)})
 			return r
 		}
 		req.Close = true
@@ -109,14 +115,10 @@ func New() (d *Driver, err error) {
 			String("status", resp.Status).Error("error", err).Log()
 
 		if err != nil {
-			r, _ := d.toJSvalue(&httpResponse{Error: fmt.Errorf("request failed: %s", err)})
+			r, _ := d.toJSvalue(&httpResponse{Error: fmt.Errorf("error performing request: %w", err)})
 			return r
 		}
 		defer resp.Body.Close()
-
-		// log.Debug("http request").String("url", u.String()).
-		// 	String("method", hro.Method).Bool("skip_ssl_verify", hro.SSLSkipVerify).
-		// 	Int("status_code", int64(resp.StatusCode)).String("status", resp.Status).Log()
 
 		jsResp := httpResponse{}
 		jsResp.Status = resp.Status
@@ -129,7 +131,7 @@ func New() (d *Driver, err error) {
 
 		b, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			r, _ := d.toJSvalue(&httpResponse{Error: fmt.Errorf("unable to read response body: %s", err)})
+			r, _ := d.toJSvalue(&httpResponse{Error: fmt.Errorf("error reading response body: %w", err)})
 			return r
 		}
 		jsResp.Body = string(b)
@@ -137,10 +139,13 @@ func New() (d *Driver, err error) {
 		r, _ := d.toJSvalue(jsResp)
 		return r
 	})
+	if err != nil {
+		return nil, fmt.Errorf("driver/javascript: error setting replicant_http_do: %w", err)
+	}
 
 	// load replicant javascript utils
 	if _, err = d.vm.Run(replicantJS); err != nil {
-		return nil, fmt.Errorf("error initializing VM core objects: %s", err)
+		return nil, fmt.Errorf("driver/javascript: error initializing replicant core objects: %w", err)
 	}
 
 	return d, nil
@@ -163,12 +168,12 @@ func (d *Driver) New(config transaction.Config) (tx transaction.Transaction, err
 
 	txn.vm = d.vm.Copy()
 	if _, err = txn.vm.Run(config.Script); err != nil {
-		return nil, fmt.Errorf("error initializing transaction script: %s", err)
+		return nil, fmt.Errorf("driver/javascript: error initializing transaction script: %w", err)
 	}
 
 	if config.CallBack != nil {
 		if _, err = txn.vm.Run(config.CallBack.Script); err != nil {
-			return nil, fmt.Errorf("error initializing callback handling script: %s", err)
+			return nil, fmt.Errorf("driver/javascript: error initializing callback handling script: %w", err)
 		}
 	}
 

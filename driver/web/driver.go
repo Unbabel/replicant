@@ -62,17 +62,17 @@ func (d *Driver) New(config transaction.Config) (tx transaction.Transaction, err
 	if ok {
 		serverURL, ok = s.(string)
 		if !ok {
-			return nil, fmt.Errorf("unexpected value for cdp_address: %#v", s)
+			return nil, fmt.Errorf("driver/web: unexpected value for cdp_address: %#v", s)
 		}
 	}
 
 	if serverURL == "" {
-		return nil, fmt.Errorf("no default server and no input cpd_server specified")
+		return nil, fmt.Errorf("driver/web: no default server and no input cpd_server specified")
 	}
 
 	txn.server, err = url.Parse(serverURL)
 	if err != nil {
-		return nil, fmt.Errorf("could not parse server URL: %w", err)
+		return nil, fmt.Errorf("driver/web: could not parse chromedp server url: %w", err)
 	}
 
 	if config.Timeout != "" {
@@ -86,7 +86,7 @@ func (d *Driver) New(config transaction.Config) (tx transaction.Transaction, err
 
 	txn.program, err = compiler.New().Compile(config.Script)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("driver/web: error compiling transaction script: %w", err)
 	}
 
 	txn.config = config

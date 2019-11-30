@@ -18,6 +18,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/brunotm/replicant/server"
@@ -62,7 +63,7 @@ func GetResults(srv *server.Server) (handle server.Handler) {
 		result.Data = srv.Manager().GetResults()
 		buf, err := json.Marshal(&result)
 		if err != nil {
-			httpError(w, err, http.StatusInternalServerError)
+			httpError(w, fmt.Errorf("error serializing results: %w", err), http.StatusInternalServerError)
 		}
 
 		w.WriteHeader(http.StatusOK)

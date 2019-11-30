@@ -148,7 +148,7 @@ github.com/robertkrimen/otto/registry
 github.com/robertkrimen/otto/token
 # github.com/robfig/cron/v3 v3.0.0
 github.com/robfig/cron/v3
-# github.com/rs/zerolog v1.15.0
+# github.com/rs/zerolog v1.17.2
 github.com/rs/zerolog
 github.com/rs/zerolog/internal/cbor
 github.com/rs/zerolog/internal/json
