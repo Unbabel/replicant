@@ -68,6 +68,7 @@ func main() {
 		fmt.Printf("error initializing log: %s\n", err)
 		os.Exit(1)
 	}
+	log.Info("logger initialized").String("level", cfg.LogLevel).Log()
 
 	// Initialize the transaction store
 	log.Info("initializing store").String("uri", cfg.StoreURI).Log()
