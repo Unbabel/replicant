@@ -18,6 +18,8 @@ package transaction
 
 import (
 	"context"
+
+	"github.com/brunotm/replicant/transaction/callback"
 )
 
 // Transaction is a test executor. It can be run many times.
@@ -34,13 +36,7 @@ type Config struct {
 	Timeout    string                 `json:"timeout" yaml:"timeout"`
 	RetryCount int                    `json:"retry_count" yaml:"retry_count"`
 	Script     string                 `json:"script" yaml:"script"`
-	CallBack   *CallBackConfig        `json:"callback" yaml:"callback"`
+	CallBack   *callback.Config       `json:"callback" yaml:"callback"`
 	Inputs     map[string]interface{} `json:"inputs" yaml:"inputs"`
 	Metadata   map[string]string      `json:"metadata" yaml:"metadata"`
-}
-
-// CallBackConfig configuration for receiving async transaction responses
-type CallBackConfig struct {
-	Type   string `json:"type" yaml:"type"`
-	Script string `json:"script" yaml:"script"`
 }
