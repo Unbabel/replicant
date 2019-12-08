@@ -24,6 +24,7 @@ import (
 	_ "github.com/brunotm/replicant/store/leveldb"
 	_ "github.com/brunotm/replicant/store/memory"
 	"github.com/brunotm/replicant/transaction/callback"
+	"github.com/julienschmidt/httprouter"
 	"gopkg.in/yaml.v2"
 )
 
@@ -86,21 +87,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Create a new transaction manager and service
-	m := manager.New(st,
-		driverJS,
-		goDriver.New(),
-		webDriver.New(cfg.Drivers.Web))
-
-	srv, err := server.New(cfg.Server, m)
-	if err != nil {
-		log.Error("failed to create replicant server").
-			String("error", err.Error()).Log()
-		os.Exit(1)
-	}
+	// Init httprouter
+	router := httprouter.New()
 
 	// Register the webhook asynchronous response listener
-	err = callback.Register("webhook", webhook.New(cfg.Callbacks.Webhook, srv.Router()))
+	err = callback.Register("webhook", webhook.New(cfg.Callbacks.Webhook, router))
 	if err != nil {
 		log.Error("failed to register webhook response handler").
 			String("error", err.Error()).Log()
@@ -111,17 +102,23 @@ func main() {
 		String("advertise_url",
 			fmt.Sprintf("%s%s", cfg.Callbacks.Webhook.AdvertiseURL, cfg.Callbacks.Webhook.PathPrefix)).Log()
 
+	// Create a new transaction manager and service
+	m := manager.New(st,
+		driverJS,
+		goDriver.New(),
+		webDriver.New(cfg.Drivers.Web))
+
 	// Register result emitters with the manager service
 	var e manager.Emitter
-	srv.Manager().AddEmitter(stdout.New(cfg.Emitters.Stdout))
+	m.AddEmitter(stdout.New(cfg.Emitters.Stdout))
 
-	e, err = prometheus.New(cfg.Emitters.Prometheus, srv.Router())
+	e, err = prometheus.New(cfg.Emitters.Prometheus, router)
 	if err != nil {
 		log.Error("failed to create prometheus emitter").
 			String("error", err.Error()).Log()
 		os.Exit(1)
 	}
-	srv.Manager().AddEmitter(e)
+	m.AddEmitter(e)
 
 	if len(cfg.Emitters.Elasticsearch.Urls) > 0 && cfg.Emitters.Elasticsearch.Index != "" {
 		e, err = elasticsearch.New(cfg.Emitters.Elasticsearch)
@@ -130,7 +127,14 @@ func main() {
 				String("error", err.Error()).Log()
 			os.Exit(1)
 		}
-		srv.Manager().AddEmitter(e)
+		m.AddEmitter(e)
+	}
+
+	srv, err := server.New(cfg.Server, m, router)
+	if err != nil {
+		log.Error("failed to create replicant server").
+			String("error", err.Error()).Log()
+		os.Exit(1)
 	}
 
 	// Enable profiling endpoints
