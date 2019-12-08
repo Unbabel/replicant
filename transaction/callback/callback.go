@@ -31,6 +31,12 @@ func init() {
 	listeners = make(map[string]Listener)
 }
 
+// Config configuration for receiving async transaction responses
+type Config struct {
+	Type   string `json:"type" yaml:"type"`
+	Script string `json:"script" yaml:"script"`
+}
+
 // Listener listen for async transaction responses.
 // Listeners must be safe for concurrent usage.
 type Listener interface {

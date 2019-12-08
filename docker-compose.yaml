@@ -11,13 +11,15 @@ services:
       - config.yaml
     command: /app/replicant -config /config.yaml
   cdp:
-    image: docker.io/chromedp/headless-shell:78.0.3904.97
+    image: docker.io/chromedp/headless-shell:78.0.3904.108
     deploy:
       mode: replicated
       replicas: 2
       endpoint_mode: dnsrr
+    command: --headless --no-sandbox --disable-gpu --disable-software-rasterizer --disable-dev-shm-usage
 volumes:
   data: null
 configs:
   config.yaml:
     file: ./example-config.yaml
+

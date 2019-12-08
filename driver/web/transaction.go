@@ -29,6 +29,7 @@ import (
 	"github.com/MontFerret/ferret/pkg/drivers/cdp"
 	"github.com/MontFerret/ferret/pkg/runtime"
 	"github.com/MontFerret/ferret/pkg/runtime/logging"
+	"github.com/brunotm/replicant/log"
 	"github.com/brunotm/replicant/transaction"
 )
 
@@ -69,6 +70,7 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 		return result
 	}
 
+	log.Debug("driver/web: chromedp server").String("address", cdpAddr).Log()
 	ctx = drivers.WithContext(
 		ctx, cdp.NewDriver(cdp.WithAddress(cdpAddr)),
 		drivers.AsDefault())
@@ -120,7 +122,5 @@ func (t *Transaction) resolveAddr() (a string, err error) {
 		return "", fmt.Errorf("could not resolve hostname in %s", serverHostname)
 	}
 
-	ip := ips[0]
-	return strings.Replace(serverURL, serverHostname, ip.String(), 1), nil
-
+	return strings.Replace(serverURL, serverHostname, ips[0].String(), 1), nil
 }

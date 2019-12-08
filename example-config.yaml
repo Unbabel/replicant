@@ -4,9 +4,9 @@ api_prefix: /api                              # API prefix for the api endpoints
 store_uri: "leveldb:/data"                    # Store connection string
 server:
   listen_address: 0.0.0.0:8080                # Address to listen on
-  write_timeout: 10m0s                        # API write timeout
-  read_timeout: 10m0s                         # Read timeout
-  read_header_timeout: 10m0s                  # Header read timeout
+  write_timeout: 5m                        # API write timeout
+  read_timeout: 5m                         # Read timeout
+  read_header_timeout: 5m                  # Header read timeout
 drivers:
   web:
     server_url: http://replicant_cdp:9222     # URL of the CDP server for web application transactions, can by overridden by the cdp_address in transaction inputs
