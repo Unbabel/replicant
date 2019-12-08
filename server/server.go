@@ -47,11 +47,11 @@ type Server struct {
 }
 
 // New creates a new replicant server
-func New(config Config, m *manager.Manager) (server *Server, err error) {
+func New(config Config, m *manager.Manager, r *httprouter.Router) (server *Server, err error) {
 	server = &Server{}
 	server.manager = m
 	server.config = config
-	server.router = httprouter.New()
+	server.router = r
 	server.http = &http.Server{}
 	server.http.Addr = config.ListenAddress
 
