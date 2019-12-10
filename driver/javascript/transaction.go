@@ -160,6 +160,11 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 			result.Message = txRes.Message
 			result.Failed = txRes.Failed
 
+			if result.Failed {
+				respCh <- result
+				return
+			}
+
 			// wait for callback response or timeout
 			var hr callback.Response
 			select {
