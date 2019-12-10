@@ -36,6 +36,7 @@ type Emitter struct {
 	failures       prometheus.Counter
 	latencyGauge   *prometheus.GaugeVec
 	retriesGauge   *prometheus.GaugeVec
+	failuresGauge  *prometheus.GaugeVec
 	latencySummary *prometheus.SummaryVec
 }
 
@@ -54,27 +55,22 @@ func (e *Emitter) Close() {}
 // Emit results
 func (e *Emitter) Emit(result transaction.Result) {
 
-	labels := make(map[string]string)
-	for k, v := range result.Metadata {
-		labels[k] = v
-	}
-
 	e.runs.Add(1)
 	switch result.Failed {
 	case true:
 		e.failures.Add(1)
-		labels["status"] = "failed"
+		e.failuresGauge.With(result.Metadata).Set(1)
 	case false:
-		labels["status"] = "passed"
+		e.failuresGauge.With(result.Metadata).Set(0)
 	}
 
 	if e.config.Gauges {
-		e.latencyGauge.With(labels).Set(result.DurationSeconds)
-		e.retriesGauge.With(labels).Set(float64(result.RetryCount))
+		e.latencyGauge.With(result.Metadata).Set(result.DurationSeconds)
+		e.retriesGauge.With(result.Metadata).Set(float64(result.RetryCount))
 	}
 
 	if e.config.Summaries {
-		e.latencySummary.With(labels).Observe(result.DurationSeconds)
+		e.latencySummary.With(result.Metadata).Observe(result.DurationSeconds)
 	}
 }
 
@@ -87,7 +83,6 @@ func New(c Config, router *httprouter.Router) (emitter *Emitter, err error) {
 
 	emitter = &Emitter{}
 	emitter.config = c
-	labels := append(c.Labels, "status")
 
 	emitter.runs = promauto.NewCounter(prometheus.CounterOpts{
 		Namespace: "replicant",
@@ -109,14 +104,21 @@ func New(c Config, router *httprouter.Router) (emitter *Emitter, err error) {
 			Subsystem: "test",
 			Name:      "latency",
 			Help:      "transaction latencies"},
-			labels)
+			c.Labels)
 
 		emitter.retriesGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: "replicant",
 			Subsystem: "test",
 			Name:      "retries",
 			Help:      "transaction retries"},
-			labels)
+			c.Labels)
+
+		emitter.failuresGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
+			Namespace: "replicant",
+			Subsystem: "test",
+			Name:      "failures",
+			Help:      "transaction failures"},
+			c.Labels)
 	}
 
 	if c.Summaries {
@@ -126,7 +128,7 @@ func New(c Config, router *httprouter.Router) (emitter *Emitter, err error) {
 			Name:       "latency_summary",
 			Help:       "transaction latencies",
 			Objectives: c.SummaryObjectives},
-			labels)
+			c.Labels)
 	}
 
 	router.Handler(http.MethodGet, c.Path, promhttp.Handler())
