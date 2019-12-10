@@ -29,7 +29,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-// Emitter for elasticsearch
+// Config for prometheus emitter
 type Emitter struct {
 	config         Config
 	runs           prometheus.Counter
