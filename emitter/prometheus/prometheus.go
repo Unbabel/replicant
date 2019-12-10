@@ -87,7 +87,7 @@ func New(c Config, router *httprouter.Router) (emitter *Emitter, err error) {
 
 	emitter = &Emitter{}
 	emitter.config = c
-	labels := append(c.Labels, "status", "retries")
+	labels := append(c.Labels, "status")
 
 	emitter.runs = promauto.NewCounter(prometheus.CounterOpts{
 		Namespace: "replicant",
