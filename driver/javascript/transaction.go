@@ -221,6 +221,7 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 		vm.Interrupt <- func() {
 			panic("stop")
 		}
+		result.Failed = true
 		result.Error = fmt.Errorf("driver/javascript: timed out running transaction after: %.2f seconds", t.timeout.Seconds())
 	}
 
