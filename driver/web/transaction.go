@@ -66,7 +66,7 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 	cdpAddr, err := t.resolveAddr()
 	if err != nil {
 		result.Error = fmt.Errorf("driver/web: %w", err)
-		result.Message = "failed to handle cpd url"
+		result.Message = "failed to handle cdp url"
 		return result
 	}
 
