@@ -19,7 +19,6 @@ package prometheus
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"strings"
 
@@ -36,6 +35,7 @@ type Emitter struct {
 	runs           prometheus.Counter
 	failures       prometheus.Counter
 	latencyGauge   *prometheus.GaugeVec
+	retriesGauge   *prometheus.GaugeVec
 	latencySummary *prometheus.SummaryVec
 }
 
@@ -68,10 +68,9 @@ func (e *Emitter) Emit(result transaction.Result) {
 		labels["status"] = "passed"
 	}
 
-	labels["retries"] = strconv.Itoa(result.RetryCount)
-
 	if e.config.Gauges {
 		e.latencyGauge.With(labels).Set(result.DurationSeconds)
+		e.retriesGauge.With(labels).Set(float64(result.RetryCount))
 	}
 
 	if e.config.Summaries {
@@ -110,6 +109,13 @@ func New(c Config, router *httprouter.Router) (emitter *Emitter, err error) {
 			Subsystem: "test",
 			Name:      "latency",
 			Help:      "transaction latencies"},
+			labels)
+
+		emitter.retriesGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
+			Namespace: "replicant",
+			Subsystem: "test",
+			Name:      "retries",
+			Help:      "transaction retries"},
 			labels)
 	}
 
