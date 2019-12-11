@@ -131,6 +131,12 @@ func (m *Manager) New(config transaction.Config) (tx transaction.Transaction, er
 }
 
 func (m *Manager) schedule(tx transaction.Transaction) (err error) {
+
+	// Hack to workaround a scheduling bug
+	// when scheduling a large amount of transactions consecutively.
+	// Must be removed when fixed.
+	time.Sleep(1 * time.Second)
+
 	var listener callback.Listener
 	config := tx.Config()
 
@@ -143,13 +149,11 @@ func (m *Manager) schedule(tx transaction.Transaction) (err error) {
 
 	return m.scheduler.AddTaskFunc(config.Name, config.Schedule,
 		func() {
-			var uuid string
 			var result transaction.Result
+			u, _ := ulid.New(ulid.Timestamp(time.Now()), m.uuidEntropy)
+			uuid := u.String()
 
 			for x := 0; x <= config.RetryCount; x++ {
-
-				u, _ := ulid.New(ulid.Timestamp(time.Now()), m.uuidEntropy)
-				uuid = u.String()
 
 				ctx := context.WithValue(context.Background(), "transaction_uuid", uuid)
 				if config.CallBack != nil {
