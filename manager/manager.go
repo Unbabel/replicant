@@ -20,10 +20,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"math/rand"
 	"sync"
 	"text/template"
-	"time"
 
 	"github.com/brunotm/replicant/driver"
 	"github.com/brunotm/replicant/internal/scheduler"
@@ -31,7 +29,7 @@ import (
 	"github.com/brunotm/replicant/store"
 	"github.com/brunotm/replicant/transaction"
 	"github.com/brunotm/replicant/transaction/callback"
-	"github.com/oklog/ulid/v2"
+	"github.com/segmentio/ksuid"
 )
 
 const (
@@ -55,7 +53,6 @@ func (e EmitterFunc) Emit(result transaction.Result) { e(result) }
 type Manager struct {
 	mtx          sync.Mutex
 	emitters     []Emitter
-	uuidEntropy  *ulid.MonotonicEntropy
 	scheduler    *scheduler.Scheduler
 	transactions store.Store
 	drivers      sync.Map
@@ -66,7 +63,6 @@ type Manager struct {
 func New(s store.Store, d ...driver.Driver) (manager *Manager) {
 	manager = &Manager{}
 	manager.transactions = s
-	manager.uuidEntropy = ulid.Monotonic(rand.New(rand.NewSource(time.Now().UnixNano())), 0)
 	manager.scheduler = scheduler.New()
 	manager.scheduler.Start()
 
@@ -132,11 +128,6 @@ func (m *Manager) New(config transaction.Config) (tx transaction.Transaction, er
 
 func (m *Manager) schedule(tx transaction.Transaction) (err error) {
 
-	// Hack to workaround a scheduling bug
-	// when scheduling a large amount of transactions consecutively.
-	// Must be removed when fixed.
-	time.Sleep(1 * time.Second)
-
 	var listener callback.Listener
 	config := tx.Config()
 
@@ -150,7 +141,7 @@ func (m *Manager) schedule(tx transaction.Transaction) (err error) {
 	return m.scheduler.AddTaskFunc(config.Name, config.Schedule,
 		func() {
 			var result transaction.Result
-			u, _ := ulid.New(ulid.Timestamp(time.Now()), m.uuidEntropy)
+			u := ksuid.New()
 			uuid := u.String()
 
 			for x := 0; x <= config.RetryCount; x++ {

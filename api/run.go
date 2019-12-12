@@ -21,14 +21,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"math/rand"
 	"net/http"
-	"time"
 
 	"github.com/brunotm/replicant/server"
 	"github.com/brunotm/replicant/transaction"
 	"github.com/brunotm/replicant/transaction/callback"
-	"github.com/oklog/ulid"
+	"github.com/segmentio/ksuid"
 	"gopkg.in/yaml.v2"
 )
 
@@ -71,8 +69,7 @@ func RunTransaction(srv *server.Server) (handle server.Handler) {
 			return
 		}
 
-		entropy := ulid.Monotonic(rand.New(rand.NewSource(time.Now().UnixNano())), 0)
-		u, _ := ulid.New(ulid.Timestamp(time.Now()), entropy)
+		u := ksuid.New()
 		uuid := u.String()
 
 		ctx := context.WithValue(context.Background(), "transaction_uuid", uuid)

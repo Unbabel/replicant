@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/brunotm/replicant/log"
 	"github.com/robfig/cron/v3"
 )
 
@@ -63,7 +64,6 @@ func New() (scheduler *Scheduler) {
 	scheduler.cron = cron.New(
 		cron.WithLogger(cron.DefaultLogger),
 		cron.WithChain(
-			cron.SkipIfStillRunning(cron.DefaultLogger),
 			cron.Recover(cron.DefaultLogger),
 		),
 	)
@@ -90,6 +90,11 @@ func (s *Scheduler) AddTask(name, schedule string, task Task) (err error) {
 	if _, ok := s.tasks[name]; ok {
 		return ErrorTaskAlreadyExists
 	}
+
+	// workaround the bug in robfig/cron which led to skipping
+	// all-1 tasks added at the same time.
+	// https://github.com/robfig/cron/pull/263
+	task = skipIfStillRunning(name, task)
 
 	var id cron.EntryID
 	if id, err = s.cron.AddJob(schedule, task); err != nil {
@@ -134,4 +139,21 @@ func (s *Scheduler) Entries() (entries []Entry) {
 	}
 
 	return entries
+}
+
+// skipIfStillRunning skips an invocation of the Job if a previous invocation is
+// still running. It logs skips to the given logger at Info level.
+func skipIfStillRunning(name string, t Task) Task {
+	var ch = make(chan struct{}, 1)
+	ch <- struct{}{}
+
+	return TaskFunc(func() {
+		select {
+		case v := <-ch:
+			t.Run()
+			ch <- v
+		default:
+			log.Warn("scheduler: skipping task").String("name", name).Log()
+		}
+	})
 }

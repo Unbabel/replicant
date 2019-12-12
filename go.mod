@@ -12,13 +12,12 @@ require (
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mailru/easyjson v0.7.0 // indirect
-	github.com/oklog/ulid v1.3.1
-	github.com/oklog/ulid/v2 v2.0.2
 	github.com/olivere/elastic/v7 v7.0.8
 	github.com/prometheus/client_golang v1.2.1
 	github.com/robertkrimen/otto v0.0.0-20180617131154-15f95af6e78d
 	github.com/robfig/cron/v3 v3.0.0
 	github.com/rs/zerolog v1.17.2 // indirect
+	github.com/segmentio/ksuid v1.0.2
 	github.com/syndtr/goleveldb v1.0.0
 	golang.org/x/net v0.0.0-20191028085509-fe3aa8a45271 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
