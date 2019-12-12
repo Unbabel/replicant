@@ -113,10 +113,6 @@ github.com/mailru/easyjson/jlexer
 github.com/mailru/easyjson/jwriter
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 github.com/matttproud/golang_protobuf_extensions/pbutil
-# github.com/oklog/ulid v1.3.1
-github.com/oklog/ulid
-# github.com/oklog/ulid/v2 v2.0.2
-github.com/oklog/ulid/v2
 # github.com/olivere/elastic/v7 v7.0.8
 github.com/olivere/elastic/v7
 github.com/olivere/elastic/v7/config
@@ -152,6 +148,8 @@ github.com/robfig/cron/v3
 github.com/rs/zerolog
 github.com/rs/zerolog/internal/cbor
 github.com/rs/zerolog/internal/json
+# github.com/segmentio/ksuid v1.0.2
+github.com/segmentio/ksuid
 # github.com/syndtr/goleveldb v1.0.0
 github.com/syndtr/goleveldb/leveldb
 github.com/syndtr/goleveldb/leveldb/cache
