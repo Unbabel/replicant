@@ -1,4 +1,4 @@
-# github.com/MontFerret/ferret v0.9.0
+# github.com/MontFerret/ferret v0.9.1-0.20191122143658-aa81df38d4a2
 github.com/MontFerret/ferret/pkg/compiler
 github.com/MontFerret/ferret/pkg/drivers
 github.com/MontFerret/ferret/pkg/drivers/cdp
@@ -23,6 +23,8 @@ github.com/MontFerret/ferret/pkg/stdlib
 github.com/MontFerret/ferret/pkg/stdlib/arrays
 github.com/MontFerret/ferret/pkg/stdlib/collections
 github.com/MontFerret/ferret/pkg/stdlib/html
+github.com/MontFerret/ferret/pkg/stdlib/io
+github.com/MontFerret/ferret/pkg/stdlib/io/fs
 github.com/MontFerret/ferret/pkg/stdlib/math
 github.com/MontFerret/ferret/pkg/stdlib/objects
 github.com/MontFerret/ferret/pkg/stdlib/strings
@@ -32,7 +34,8 @@ github.com/MontFerret/ferret/pkg/stdlib/utils
 github.com/PuerkitoBio/goquery
 # github.com/andybalholm/cascadia v1.1.0
 github.com/andybalholm/cascadia
-# github.com/antlr/antlr4 v0.0.0-20191011202612-ad2bd05285ca
+# github.com/antlr/antlr4 v0.0.0-20191212171830-8ae756a02574
+github.com/antlr/antlr4/doc/resources
 github.com/antlr/antlr4/runtime/Go/antlr
 # github.com/beorn7/perks v1.0.1
 github.com/beorn7/perks/quantile
@@ -45,6 +48,10 @@ github.com/containous/yaegi/interp
 github.com/containous/yaegi/stdlib
 # github.com/corpix/uarand v0.1.1
 github.com/corpix/uarand
+# github.com/dgryski/go-jump v0.0.0-20170409065014-e1f439676b57
+github.com/dgryski/go-jump
+# github.com/dgryski/go-wyhash v0.0.0-20191203203029-c4841ae36371
+github.com/dgryski/go-wyhash
 # github.com/golang/protobuf v1.3.2
 github.com/golang/protobuf/proto
 # github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db
@@ -163,12 +170,12 @@ github.com/syndtr/goleveldb/leveldb/opt
 github.com/syndtr/goleveldb/leveldb/storage
 github.com/syndtr/goleveldb/leveldb/table
 github.com/syndtr/goleveldb/leveldb/util
-# golang.org/x/net v0.0.0-20191028085509-fe3aa8a45271
+# golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553
 golang.org/x/net/html
 golang.org/x/net/html/atom
 # golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 golang.org/x/sync/errgroup
-# golang.org/x/sys v0.0.0-20191027211539-f8518d3b3627
+# golang.org/x/sys v0.0.0-20191210023423-ac6580df4449
 golang.org/x/sys/windows
 # gopkg.in/sourcemap.v1 v1.0.5
 gopkg.in/sourcemap.v1
