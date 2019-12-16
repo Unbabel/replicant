@@ -32,11 +32,16 @@ var (
 	defaultConfigFile = "replicant.yaml"
 	writeConfig       = flag.Bool("write", false, "write default configuration")
 	configFile        = flag.String("config", "", "replicant configuration file")
+
+	Version   string
+	GitCommit string
+	BuildTime string
 )
 
 // bloody and dirty
 func main() {
 	flag.Parse()
+	fmt.Printf("replicant version: %s, build date: %s\n\n", Version, BuildTime)
 
 	var err error
 	cfg := config.DefaultConfig
