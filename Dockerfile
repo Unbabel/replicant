@@ -1,8 +1,8 @@
 FROM golang:alpine AS builder
-RUN apk --no-cache add git
+RUN apk --no-cache add git make
 ADD . /src/replicant
 WORKDIR /src/replicant
-RUN CGO_ENABLED=0 go build -mod=vendor -ldflags '-w -extldflags "-static"' -o replicant cmd/replicant/*.go
+RUN make build
 
 FROM alpine
 # FROM gcr.io/distroless/base

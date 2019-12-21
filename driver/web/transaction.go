@@ -67,6 +67,7 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 	if err != nil {
 		result.Error = fmt.Errorf("driver/web: %w", err)
 		result.Message = "failed to handle cdp url"
+		result.DurationSeconds = time.Since(result.Time).Seconds()
 		return result
 	}
 
