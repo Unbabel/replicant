@@ -17,14 +17,13 @@ package manager
 */
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"sync"
-	"text/template"
 
 	"github.com/brunotm/replicant/driver"
 	"github.com/brunotm/replicant/internal/scheduler"
+	"github.com/brunotm/replicant/internal/tmpl"
 	"github.com/brunotm/replicant/internal/xz"
 	"github.com/brunotm/replicant/log"
 	"github.com/brunotm/replicant/store"
@@ -117,7 +116,7 @@ func (m *Manager) New(config transaction.Config) (tx transaction.Transaction, er
 	}
 
 	if config.Inputs != nil {
-		if config, err = parseTemplate(config); err != nil {
+		if config, err = tmpl.Parse(config); err != nil {
 			return nil, fmt.Errorf("manager: error parsing transaction template: %w", err)
 		}
 	}
@@ -293,22 +292,4 @@ func (m *Manager) GetTransactionsConfig() (configs []transaction.Config) {
 	})
 
 	return configs
-}
-
-func parseTemplate(config transaction.Config) (c transaction.Config, err error) {
-
-	tpl, err := template.New(config.Name).Parse(config.Script)
-	if err != nil {
-		return config, err
-	}
-
-	var buf bytes.Buffer
-	err = tpl.Execute(&buf, config.Inputs)
-	if err != nil {
-		return config, err
-	}
-
-	config.Script = buf.String()
-	return config, nil
-
 }
