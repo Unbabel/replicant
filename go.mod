@@ -6,6 +6,7 @@ require (
 	github.com/MontFerret/ferret v0.9.1-0.20191122143658-aa81df38d4a2
 	github.com/andybalholm/cascadia v1.1.0 // indirect
 	github.com/antlr/antlr4 v0.0.0-20191212171830-8ae756a02574 // indirect
+	github.com/aws/aws-sdk-go v1.19.6
 	github.com/brunotm/log v0.3.2
 	github.com/containous/yaegi v0.6.2
 	github.com/dgryski/go-jump v0.0.0-20170409065014-e1f439676b57
