@@ -98,7 +98,7 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 }
 
 // resolveAddr parses the cdp URL and converts the hostname into an ip address
-// to ensure we talk with the same cpd server during the whole transaction lifecycle
+// to ensure we talk with the same cdp server during the whole transaction lifecycle
 // and avoid invalid sessions when dealing with DNS load balacing (e.g. headless k8s services)
 func (t *Transaction) resolveAddr() (a string, err error) {
 	serverURL := t.server.String()
@@ -116,7 +116,7 @@ func (t *Transaction) resolveAddr() (a string, err error) {
 	// resolve server ip addr
 	ips, err := net.LookupIP(serverHostname)
 	if err != nil {
-		return "", fmt.Errorf("error resolving cpd_server name: %w", err)
+		return "", fmt.Errorf("error resolving cdp_server name: %w", err)
 	}
 
 	if len(ips) == 0 {

@@ -37,7 +37,7 @@ type Config struct {
 	ServerURL string `json:"server_url" yaml:"server_url"`
 
 	// Perform DNS discovery with the server hostname
-	// The web driver needs to maintain the same cpd server across multiple http
+	// The web driver needs to maintain the same cdp server across multiple http
 	// requests. This needed when using multiple cdp servers that are load balanced
 	// by DNS round robin, like a kubernetes headless service.
 	DNSDiscovery bool `json:"dns_discovery" yaml:"dns_discovery"`
@@ -67,7 +67,7 @@ func (d *Driver) New(config transaction.Config) (tx transaction.Transaction, err
 	}
 
 	if serverURL == "" {
-		return nil, fmt.Errorf("driver/web: no default server and no input cpd_server specified")
+		return nil, fmt.Errorf("driver/web: no default server and no input cdp_server specified")
 	}
 
 	txn.server, err = url.Parse(serverURL)
