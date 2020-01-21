@@ -1,8 +1,7 @@
 package memory
 
 import (
-	"sync"
-
+	"github.com/brunotm/replicant/internal/xz"
 	"github.com/brunotm/replicant/store"
 	"github.com/brunotm/replicant/transaction"
 )
@@ -18,17 +17,18 @@ func init() {
 
 // Store is a in memory transaction config store
 type Store struct {
-	data sync.Map
+	data *xz.Map
 }
 
 // New creates a new in memory transaction config store
 func New(_ string) (s *Store, err error) {
-	return &Store{}, nil
+	return &Store{xz.NewMap()}, nil
 }
 
 // Close the store
 func (s *Store) Close() (err error) {
-	s.data = sync.Map{}
+	s.data.Clear()
+	s.data = nil
 	return nil
 }
 

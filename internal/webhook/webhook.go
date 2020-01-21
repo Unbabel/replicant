@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"sync"
 
+	"github.com/brunotm/replicant/internal/xz"
 	"github.com/brunotm/replicant/transaction/callback"
 	"github.com/julienschmidt/httprouter"
 )
@@ -32,7 +32,7 @@ type Listener struct {
 	prefix  string
 	url     string
 	router  *httprouter.Router
-	handles sync.Map
+	handles *xz.Map
 }
 
 // Config options
@@ -47,6 +47,7 @@ func New(c Config, router *httprouter.Router) (l *Listener) {
 	l.url = c.AdvertiseURL
 	l.prefix = c.PathPrefix
 	l.router = router
+	l.handles = xz.NewMap()
 
 	// The handler access the listener state of open dynamically allocated webhook endpoints
 	router.Handle(http.MethodPost, l.prefix+"/:id", func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
