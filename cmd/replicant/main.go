@@ -23,6 +23,7 @@ import (
 	"github.com/brunotm/replicant/store"
 	_ "github.com/brunotm/replicant/store/leveldb"
 	_ "github.com/brunotm/replicant/store/memory"
+	_ "github.com/brunotm/replicant/store/s3"
 	"github.com/brunotm/replicant/transaction/callback"
 	"github.com/julienschmidt/httprouter"
 	"gopkg.in/yaml.v2"
