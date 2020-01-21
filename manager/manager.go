@@ -25,6 +25,7 @@ import (
 
 	"github.com/brunotm/replicant/driver"
 	"github.com/brunotm/replicant/internal/scheduler"
+	"github.com/brunotm/replicant/internal/xz"
 	"github.com/brunotm/replicant/log"
 	"github.com/brunotm/replicant/store"
 	"github.com/brunotm/replicant/transaction"
@@ -55,14 +56,16 @@ type Manager struct {
 	emitters     []Emitter
 	scheduler    *scheduler.Scheduler
 	transactions store.Store
-	drivers      sync.Map
-	results      sync.Map
+	drivers      *xz.Map
+	results      *xz.Map
 }
 
 // New creates a new manager
 func New(s store.Store, d ...driver.Driver) (manager *Manager) {
 	manager = &Manager{}
 	manager.transactions = s
+	manager.drivers = xz.NewMap()
+	manager.results = xz.NewMap()
 	manager.scheduler = scheduler.New()
 	manager.scheduler.Start()
 

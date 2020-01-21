@@ -3,13 +3,13 @@ package store
 import (
 	"fmt"
 	"strings"
-	"sync"
 
+	"github.com/brunotm/replicant/internal/xz"
 	"github.com/brunotm/replicant/transaction"
 )
 
 var (
-	registry = sync.Map{}
+	registry = xz.NewMap()
 	// ErrTransactionNotFound transaction not found
 	ErrTransactionNotFound = fmt.Errorf("transaction not found")
 )
