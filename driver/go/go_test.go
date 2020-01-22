@@ -1,4 +1,4 @@
-package javascript
+package gd
 
 import (
 	"context"
@@ -37,7 +37,8 @@ func TestDriverTransaction(t *testing.T) {
 	go server.ListenAndServe()
 	defer server.Close()
 
-	d, err := New()
+	var err error
+	d := New()
 	if err != nil {
 		t.Fatalf("error creating driver: %s", err)
 	}
@@ -69,7 +70,7 @@ func TestDriverTransaction(t *testing.T) {
 // test transaction
 var config transaction.Config = transaction.Config{
 	Name:       "test-transaction",
-	Driver:     "javascript",
+	Driver:     "go",
 	Schedule:   "@every 60s",
 	Timeout:    "5s",
 	RetryCount: 1,
@@ -84,29 +85,41 @@ var config transaction.Config = transaction.Config{
 		"environment": "test",
 		"component":   "api",
 	},
-	Script: `function Run(ctx) {
-	//replicant.Log("test started")
-	req = replicant.http.NewRequest()
-	req.Method = "GET"
-	req.URL = "{{ index . "url" }}"
-	req.Params.q = "{{ index . "text" }}"
-	req.Header["X-Auth"] = "{{ index . "xauth" }}"
-	//replicant.Log("going to perform request")
-	resp = replicant.http.Do(req)
-	data = JSON.parse(resp.Body)
-	//replicant.Log(data)
-	rr = replicant.NewResponse()
-	rr.Message = resp.Status
-	switch(resp.StatusCode > 200) {
-		case true:
-		rr.Error = data.reason
-		rr.Failed = true
-		break
-	case false:
-		rr.Data = data.reason
-		rr.Failed = false
-		break
-	}
-	return rr.JSON()
-}`,
+	Script: `
+	package transaction
+	import (
+		"fmt"
+		"net/http"
+		"context"
+		"encoding/json"
+		"io/ioutil"
+	)
+	func Run(ctx context.Context) (m string, d string, err error) {
+		req, err := http.NewRequest(http.MethodGet, "{{ index . "url" }}", nil)
+		if err != nil {
+			return "request build failed", "", err
+		}
+		req.Header.Add("X-Auth","{{ index . "xauth" }}")
+		q := req.URL.Query()
+		q.Add("q", "{{ index . "text" }}")
+		req.URL.RawQuery = q.Encode()
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+		return "failed to send request", "", err
+		}
+		buf, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+		return "failed to read response", "", err
+		}
+		result := struct{Reason string}{}
+		err = json.Unmarshal(buf, &result)
+		if err != nil {
+		return "failed to unmarshal response", string(buf), err
+		}
+		if resp.StatusCode > 200 {
+			return "status code > 200", result.Reason, fmt.Errorf(result.Reason)
+		}
+		return "test successful", result.Reason, nil
+	}`,
 }

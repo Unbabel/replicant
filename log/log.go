@@ -32,20 +32,32 @@ func Init(level string) (err error) {
 
 // Debug creates a new log entry with the given message using the package level logger.
 func Debug(message string) (e log.Entry) {
+	if logger == nil {
+		return log.Entry{}
+	}
 	return logger.Debug(message)
 }
 
 // Info creates a new log entry with the given message using the package level logger.
 func Info(message string) (e log.Entry) {
+	if logger == nil {
+		return log.Entry{}
+	}
 	return logger.Info(message)
 }
 
 // Warn creates a new log entry with the given message using the package level logger.
 func Warn(message string) (e log.Entry) {
+	if logger == nil {
+		return log.Entry{}
+	}
 	return logger.Warn(message)
 }
 
 // Error creates a new log entry with the given message using the package level logger.
 func Error(message string) (e log.Entry) {
+	if logger == nil {
+		return log.Entry{}
+	}
 	return logger.Error(message)
 }

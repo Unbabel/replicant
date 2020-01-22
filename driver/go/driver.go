@@ -1,4 +1,4 @@
-package web
+package gd
 
 /*
    Copyright 2019 Bruno Moura <brunotm@gmail.com>
