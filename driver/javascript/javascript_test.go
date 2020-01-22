@@ -6,12 +6,10 @@ import (
 	"testing"
 
 	"github.com/brunotm/replicant/internal/tmpl"
-	"github.com/brunotm/replicant/log"
 	"github.com/brunotm/replicant/transaction"
 )
 
 func TestDriverTransaction(t *testing.T) {
-	log.Init("INFO")
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
