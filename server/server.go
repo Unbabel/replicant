@@ -32,6 +32,8 @@ import (
 
 // Config for replicant server
 type Config struct {
+	Username          string        `json:"username" yaml:"username"`
+	Password          string        `json:"password" yaml:"password"`
 	ListenAddress     string        `json:"listen_address" yaml:"listen_address"`
 	WriteTimeout      time.Duration `json:"write_timeout" yaml:"write_timeout"`
 	ReadTimeout       time.Duration `json:"read_timeout" yaml:"read_timeout"`
@@ -103,13 +105,27 @@ func (s *Server) Close(ctx context.Context) (err error) {
 // AddHandler adds a handler for the given method and path
 func (s *Server) AddHandler(method, path string, handler Handler) {
 	log.Info("adding handler").String("path", path).String("method", method).Log()
+
+	if s.config.Username != "" && s.config.Password != "" {
+		handler = basicAuth(handler, s.config.Username, s.config.Password)
+	}
+
 	s.router.Handle(method, path, logger(recovery(handler)))
 }
 
 // AddServerHandler adds a handler for the given method and path
 func (s *Server) AddServerHandler(method, path string, handler ServerHandler) {
 	log.Info("adding handler").String("path", path).String("method", method).Log()
-	s.router.Handle(method, path, logger(recovery(handler(s))))
+
+	var h Handler
+	switch s.config.Username != "" && s.config.Password != "" {
+	case true:
+		h = basicAuth(handler(s), s.config.Username, s.config.Password)
+	case false:
+		h = handler(s)
+	}
+
+	s.router.Handle(method, path, logger(recovery(h)))
 }
 
 // ServerHandler is handler that has access to the server
@@ -160,6 +176,18 @@ func logger(h Handler) (n Handler) {
 			Int("content_length", int64(sw.length)).
 			Int("duration_ms", time.Since(start).Milliseconds()).
 			Log()
+	}
+}
+
+// basic auth middleware until we have proper auth
+func basicAuth(h Handler, user, password string) (n Handler) {
+	return func(w http.ResponseWriter, r *http.Request, ps Params) {
+		user, password, hasAuth := r.BasicAuth()
+		if hasAuth && user == user && password == password {
+			h(w, r, ps)
+		} else {
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		}
 	}
 }
 

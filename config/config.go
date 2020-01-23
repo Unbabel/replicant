@@ -46,6 +46,8 @@ var DefaultConfig = Config{
 	APIPrefix: "/api",
 	StoreURI:  "memory:-",
 	Server: server.Config{
+		Username:          "",
+		Password:          "",
 		ListenAddress:     "0.0.0.0:8080",
 		WriteTimeout:      5 * time.Minute,
 		ReadTimeout:       5 * time.Minute,
