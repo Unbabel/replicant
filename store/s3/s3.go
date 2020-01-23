@@ -59,9 +59,7 @@ func New(uri string) (*Store, error) {
 		return nil, err
 	}
 	if reg, ok := u.Query()["region"]; ok {
-		sess, err = session.NewSession(awsconfig, aws.NewConfig().WithCredentials(credentials.NewEnvCredentials()), aws.NewConfig().WithRegion(reg[0]))
-	} else {
-		sess, err = session.NewSession(awsconfig, aws.NewConfig().WithCredentials(credentials.NewEnvCredentials()))
+		sess, err = session.NewSession(awsconfig.WithRegion(reg[0]))
 	}
 	if err != nil {
 		return nil, fmt.Errorf("%w", err)
