@@ -3,7 +3,9 @@ log_level: INFO                               # Log level
 api_prefix: /api                              # API prefix for the api endpoints
 store_uri: "leveldb:/data"                    # Store connection string
 server:
-  listen_address: 0.0.0.0:8080                # Address to listen on
+  username: replicant                      # username for server basic auth
+  password: replicant-password             # password for server basic auth
+  listen_address: 0.0.0.0:8080             # Address to listen on
   write_timeout: 5m                        # API write timeout
   read_timeout: 5m                         # Read timeout
   read_header_timeout: 5m                  # Header read timeout
