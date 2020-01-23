@@ -37,16 +37,20 @@ type Store struct {
 func New(uri string) (*Store, error) {
 	var err error
 	u, err := url.Parse(uri)
+
 	if err != nil {
 		return nil, fmt.Errorf("%w", err)
 	}
+
 	if u.Scheme != "s3" {
 		return nil, fmt.Errorf("Invalid uri scheme for s3")
 	}
+
 	var awsconfig *aws.Config = aws.NewConfig()
 	var creds *credentials.Credentials
 	var sess *session.Session
 	secretkey, haspassword := u.User.Password()
+
 	if haspassword {
 		creds = credentials.NewStaticCredentialsFromCreds(credentials.Value{
 			AccessKeyID:     u.User.Username(),
@@ -58,12 +62,15 @@ func New(uri string) (*Store, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if reg, ok := u.Query()["region"]; ok {
 		sess, err = session.NewSession(awsconfig.WithRegion(reg[0]))
 	}
+
 	if err != nil {
 		return nil, fmt.Errorf("%w", err)
 	}
+
 	svc := s3.New(sess)
 
 	return &Store{data: svc, bucketName: u.Host, prefix: u.Path}, nil
@@ -83,9 +90,11 @@ func (s *Store) Delete(name string) error {
 		Key:    aws.String(s.prefix + "/" + name),
 	}
 	_, err := s.data.DeleteObject(input)
+
 	if err != nil {
 		return fmt.Errorf("%w", err)
 	}
+
 	return nil
 }
 
@@ -98,7 +107,9 @@ func (s *Store) Get(name string) (config transaction.Config, err error) {
 		Key:    aws.String(s.prefix + "/" + name),
 	}
 	result, err := s.data.GetObject(input)
+
 	if err != nil {
+
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
 			case s3.ErrCodeNoSuchKey:
@@ -107,13 +118,17 @@ func (s *Store) Get(name string) (config transaction.Config, err error) {
 				return config, fmt.Errorf("%w", err)
 			}
 		}
+
 	}
+
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(result.Body)
 	err = json.Unmarshal(buf.Bytes(), &config)
+
 	if err != nil {
 		return config, err
 	}
+
 	return config, nil
 }
 
@@ -121,12 +136,15 @@ func (s *Store) Get(name string) (config transaction.Config, err error) {
 // receives a string with the path to the object.
 // returns a boolean (true if object exists, false otherwise) and an error in case of unexpected behaviour.
 func (s *Store) Has(name string) (exists bool, err error) {
+
 	input := &s3.GetObjectInput{
 		Bucket: aws.String(s.bucketName),
 		Key:    aws.String(s.prefix + "/" + name),
 	}
 	_, err = s.data.GetObject(input)
+
 	if err != nil {
+
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
 			case s3.ErrCodeNoSuchKey:
@@ -135,7 +153,9 @@ func (s *Store) Has(name string) (exists bool, err error) {
 				return false, fmt.Errorf("%w", err)
 			}
 		}
+
 	}
+
 	return true, nil
 }
 
@@ -150,17 +170,21 @@ func (s *Store) Iter(callback func(name string, config transaction.Config) (proc
 // returns an error in case of unexpected behaviour.
 func (s *Store) Set(name string, config transaction.Config) (err error) {
 	b, err := json.Marshal(&config)
+
 	if err != nil {
 		return err
 	}
+
 	input := &s3.PutObjectInput{
 		Body:   aws.ReadSeekCloser(bytes.NewReader(b)),
 		Bucket: aws.String(s.bucketName),
 		Key:    aws.String(s.prefix + "/" + name),
 	}
 	_, err = s.data.PutObject(input)
+
 	if err != nil {
 		return fmt.Errorf("%w", err)
 	}
+
 	return nil
 }
