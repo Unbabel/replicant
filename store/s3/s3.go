@@ -49,12 +49,12 @@ func New(uri string) (*Store, error) {
 	var awsconfig *aws.Config = aws.NewConfig()
 	var creds *credentials.Credentials
 	var sess *session.Session
-	secretkey, haspassword := u.User.Password()
+	secretKey, hasPassword := u.User.Password()
 
-	if haspassword {
+	if hasPassword {
 		creds = credentials.NewStaticCredentialsFromCreds(credentials.Value{
 			AccessKeyID:     u.User.Username(),
-			SecretAccessKey: secretkey,
+			SecretAccessKey: secretKey,
 		})
 		awsconfig.WithCredentials(creds)
 	}
