@@ -51,7 +51,7 @@ func New(uri string) (*Store, error) {
 	var sess *session.Session
 	secretKey, hasPassword := u.User.Password()
 
-	if hasPassword {
+	if hasPassword { // If access and secret key is used, then initialize it
 		creds = credentials.NewStaticCredentialsFromCreds(credentials.Value{
 			AccessKeyID:     u.User.Username(),
 			SecretAccessKey: secretKey,
@@ -63,7 +63,7 @@ func New(uri string) (*Store, error) {
 		return nil, err
 	}
 
-	if reg, ok := u.Query()["region"]; ok {
+	if reg, ok := u.Query()["region"]; ok { // If the region is specified, initialize it
 		sess, err = session.NewSession(awsconfig.WithRegion(reg[0]))
 	}
 
@@ -110,7 +110,7 @@ func (s *Store) Get(name string) (config transaction.Config, err error) {
 
 	if err != nil {
 
-		if aerr, ok := err.(awserr.Error); ok {
+		if aerr, ok := err.(awserr.Error); ok { // If there was an error, map it into application errors
 			switch aerr.Code() {
 			case s3.ErrCodeNoSuchKey:
 				return config, store.ErrTransactionNotFound
@@ -145,7 +145,7 @@ func (s *Store) Has(name string) (exists bool, err error) {
 
 	if err != nil {
 
-		if aerr, ok := err.(awserr.Error); ok {
+		if aerr, ok := err.(awserr.Error); ok { // If there was an error map it into application error
 			switch aerr.Code() {
 			case s3.ErrCodeNoSuchKey:
 				return false, nil
@@ -159,9 +159,34 @@ func (s *Store) Has(name string) (exists bool, err error) {
 	return true, nil
 }
 
-// TODO
+// Iter function iterates through the list of objects in the S3 bucket.
+// receives a callback function to operate on the data and decide if continues.
+// returns error in case of unexpected behaviour
 func (s *Store) Iter(callback func(name string, config transaction.Config) (proceed bool)) (err error) {
-	//TODO
+	listObjectInput := &s3.ListObjectsInput{
+		Bucket: aws.String(s.bucketName),
+		Prefix: aws.String(s.prefix),
+	}
+
+	outputs, err := s.data.ListObjects(listObjectInput)
+
+	if err != nil {
+		return fmt.Errorf("%w", err)
+	}
+
+	for _, object := range outputs.Contents {
+		var config transaction.Config
+		name := string(*object.Key)
+
+		config, err = s.Get(name)
+		if err != nil {
+			return err
+		}
+
+		if !callback(name, config) {
+			return
+		}
+	}
 	return nil
 }
 
