@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/brunotm/replicant/store"
 	"github.com/brunotm/replicant/transaction"
 	"net/url"
@@ -26,9 +27,9 @@ func init() {
 }
 
 type Store struct {
-	data       *s3.S3 // S3 data source object.
-	bucketName string // Name of the bucket to store data.
-	prefix     string // Path inside the bucket to use as prefix.
+	data       s3iface.S3API // S3 data source object.
+	bucketName string        // Name of the bucket to store data.
+	prefix     string        // Path inside the bucket to use as prefix.
 }
 
 // New function creates a new storage object with a subtype of s3.
@@ -39,11 +40,11 @@ func New(uri string) (*Store, error) {
 	u, err := url.Parse(uri)
 
 	if err != nil {
-		return nil, fmt.Errorf("%w", err)
+		return nil, wrapError(fmt.Sprintf("failed to parse URI %s", uri), err)
 	}
 
 	if u.Scheme != "s3" {
-		return nil, fmt.Errorf("Invalid uri scheme for s3")
+		return nil, wrapError(fmt.Sprintf("invalid S3 scheme in URI %s. Scheme is %s", uri, u.Scheme), fmt.Errorf("Invalid S3 URI"))
 	}
 
 	var awsconfig *aws.Config = aws.NewConfig()
@@ -59,16 +60,12 @@ func New(uri string) (*Store, error) {
 		awsconfig.WithCredentials(creds)
 	}
 
-	if err != nil {
-		return nil, err
-	}
-
 	if reg, ok := u.Query()["region"]; ok { // If the region is specified, initialize it
 		sess, err = session.NewSession(awsconfig.WithRegion(reg[0]))
-	}
 
-	if err != nil {
-		return nil, fmt.Errorf("%w", err)
+		if err != nil {
+			return nil, wrapError("failed to create session", err)
+		}
 	}
 
 	svc := s3.New(sess)
@@ -92,7 +89,7 @@ func (s *Store) Delete(name string) error {
 	_, err := s.data.DeleteObject(input)
 
 	if err != nil {
-		return fmt.Errorf("%w", err)
+		return wrapError(fmt.Sprintf("failed to delete object %s", name), err)
 	}
 
 	return nil
@@ -115,7 +112,7 @@ func (s *Store) Get(name string) (config transaction.Config, err error) {
 			case s3.ErrCodeNoSuchKey:
 				return config, store.ErrTransactionNotFound
 			default:
-				return config, fmt.Errorf("%w", err)
+				return config, wrapError(fmt.Sprintf("failed to retrieve object %s", name), err)
 			}
 		}
 
@@ -150,7 +147,7 @@ func (s *Store) Has(name string) (exists bool, err error) {
 			case s3.ErrCodeNoSuchKey:
 				return false, nil
 			default:
-				return false, fmt.Errorf("%w", err)
+				return false, wrapError(fmt.Sprintf("failed to retrieve object %s", name), err)
 			}
 		}
 
@@ -171,7 +168,7 @@ func (s *Store) Iter(callback func(name string, config transaction.Config) (proc
 	outputs, err := s.data.ListObjects(listObjectInput)
 
 	if err != nil {
-		return fmt.Errorf("%w", err)
+		return wrapError(fmt.Sprintf("failed to list object with prefix %s", s.prefix), err)
 	}
 
 	for _, object := range outputs.Contents {
@@ -180,7 +177,7 @@ func (s *Store) Iter(callback func(name string, config transaction.Config) (proc
 
 		config, err = s.Get(name)
 		if err != nil {
-			return err
+			return err // No need to wrap since it comes wrapped from the Get function
 		}
 
 		if !callback(name, config) {
@@ -208,8 +205,15 @@ func (s *Store) Set(name string, config transaction.Config) (err error) {
 	_, err = s.data.PutObject(input)
 
 	if err != nil {
-		return fmt.Errorf("%w", err)
+		return wrapError("failed to put object", err)
 	}
 
 	return nil
+}
+
+// wrapError function is basically a wrapper for the errors inside this package in order to avoid repeating some strings.
+// receives a string with the specific message for that error and receives an error which is the upstream error to this one.
+// returns a new error in a proper format
+func wrapError(message string, err error) error {
+	return fmt.Errorf("store/s3: %s %w", message, err)
 }
