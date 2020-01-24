@@ -101,7 +101,7 @@ script: |
 ##### Using the javascript driver
 The following API is exposed by the javascript driver in order to perform HTTP calls and logging:
 * `replicant.Log(string)` log messages from the javascript test on the replicant server log.
-* `replicant.NewResponse()` create a new response object to be returned as a result of the test, which should be modified accordingly to reflect the tests results. The response must be returned as a serialized json object byt calling its bounded method `Response.JSON`, E.g. `return response.JSON()`.
+* `replicant.NewResponse()` create a new response object to be returned as a result of the test, which should be modified accordingly to reflect the test result. The response must be returned as a serialized JSON object by calling its bounded method `Response.JSON`, E.g. `return response.JSON()`.
 
 Response type attributes:
 ```js
@@ -111,7 +111,7 @@ Response type attributes:
 		Failed: false,
 }
 ```
-* `replicant.http.NewRequest()` creates a new http request object for performing HTTP calls.
+* `replicant.http.NewRequest()` creates a new HTTP request object for performing HTTP calls.
 
 HttpRequest attributes:
 ```js
@@ -125,7 +125,7 @@ HttpRequest attributes:
 		SSLSkipVerify: false,
 ```
 
-* `replicant.http.Do(HttpRequest) performs a http request and returns its response.
+* `replicant.http.Do(HttpRequest) performs a HTTP request and returns its response.
 
 HttpResponse attributes:
 ```js
@@ -139,7 +139,7 @@ HttpResponse attributes:
 }
 ```
 
-#### Test definition (can be also in json format)
+#### Test definition (can be also in JSON format)
 
 ```yaml
 POST http://127.0.0.1:8080/api/v1/run
@@ -192,7 +192,7 @@ Standard Go code can be used to create tests using following rules:
 
 ***Keep in mind that unlike the javascript driver which doesn't expose any I/O or lower level functionality for accessing the underlying OS, the Go driver currently exposes all of the Go standard library. Only use this driver if you are absolutely sure of what you are doing. This is planned to change in the future.***
 
-#### Test definition (can be also in json format)
+#### Test definition (can be also in JSON format)
 ```yaml
 POST http://127.0.0.1:8080/api/v1/run
 content-type: application/yaml
