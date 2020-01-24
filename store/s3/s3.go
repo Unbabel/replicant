@@ -15,6 +15,7 @@ import (
 	"github.com/brunotm/replicant/store"
 	"github.com/brunotm/replicant/transaction"
 	"net/url"
+	"strings"
 )
 
 var _ store.Store = (*Store)(nil)
@@ -70,7 +71,7 @@ func New(uri string) (*Store, error) {
 
 	svc := s3.New(sess)
 
-	return &Store{data: svc, bucketName: u.Host, prefix: u.Path}, nil
+	return &Store{data: svc, bucketName: u.Host, prefix: strings.Replace(u.Path, "/", "", 1)}, nil
 }
 
 // Close function does nothing as the connection is not persistent.
@@ -173,14 +174,14 @@ func (s *Store) Iter(callback func(name string, config transaction.Config) (proc
 
 	for _, object := range outputs.Contents {
 		var config transaction.Config
-		name := string(*object.Key)
+		name := strings.Split(string(*object.Key), "/")
 
-		config, err = s.Get(name)
+		config, err = s.Get(name[len(name)-1])
 		if err != nil {
 			return err // No need to wrap since it comes wrapped from the Get function
 		}
 
-		if !callback(name, config) {
+		if !callback(name[len(name)-1], config) {
 			return
 		}
 	}
