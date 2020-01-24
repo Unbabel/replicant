@@ -98,11 +98,48 @@ script: |
 
 ### API testing (local development)
 
-API testing support is based on interpreted go code, [documentation](https://github.com/containous/yaegi).
-
-#### Test definition (can be also in json format)
-
 ##### Using the javascript driver
+The following API is exposed by the javascript driver in order to perform HTTP calls and logging:
+* `replicant.Log(string)` log messages from the javascript test on the replicant server log.
+* `replicant.NewResponse()` create a new response object to be returned as a result of the test, which should be modified accordingly to reflect the test result. The response must be returned as a serialized JSON object by calling its bounded method `Response.JSON`, E.g. `return response.JSON()`.
+
+Response type attributes:
+```js
+{
+		Data: "",
+		Message: "",
+		Failed: false,
+}
+```
+* `replicant.http.NewRequest()` creates a new HTTP request object for performing HTTP calls.
+
+HttpRequest attributes:
+```js
+{
+		URL: "",
+		Method: "",
+		Body: "",
+		Header: {},
+		Params: {},
+		FormData: {},
+		SSLSkipVerify: false,
+```
+
+* `replicant.http.Do(HttpRequest) performs a HTTP request and returns its response.
+
+HttpResponse attributes:
+```js
+{
+	Status: ""
+	StatusCode: 200
+	Protocol: ""
+	Body: ""
+	Header: {}
+	Error: ""
+}
+```
+
+#### Test definition (can be also in JSON format)
 
 ```yaml
 POST http://127.0.0.1:8080/api/v1/run
@@ -149,7 +186,13 @@ script: |
 
 
 ##### Using the Go driver
+Standard Go code can be used to create tests using following rules:
+* The package name must be `transaction`
+* The test function must implement the following signature: `func Run(ctx context.Context) (message string, data string, err error)`.
 
+***Keep in mind that unlike the javascript driver which doesn't expose any I/O or lower level functionality for accessing the underlying OS, the Go driver currently exposes all of the Go standard library. Only use this driver if you are absolutely sure of what you are doing. This is planned to change in the future.***
+
+#### Test definition (can be also in JSON format)
 ```yaml
 POST http://127.0.0.1:8080/api/v1/run
 content-type: application/yaml
@@ -262,10 +305,12 @@ script: |
 * Architecture and API documentation
 * Javascript driver transaction support
 
-## Related Projects
+
+## Acknowledgements
 
 * [Yaegi is Another Elegant Go Interpreter](https://github.com/containous/yaegi)
 * [Ferret Declarative web scraping](https://github.com/MontFerret/ferret)
+* [otto is a JavaScript parser and interpreter written natively in Go](https://github.com/robertkrimen/otto)
 
 ## Contact
 
