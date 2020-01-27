@@ -6,21 +6,19 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/Unbabel/replicant/store"
+	"github.com/Unbabel/replicant/transaction"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
-	"github.com/Unbabel/replicant/store"
-	"github.com/Unbabel/replicant/transaction"
 	"net/url"
 	"strings"
 )
 
 var _ store.Store = (*Store)(nil)
-
-const moduleLogMessage = "store/s3:"
 
 func init() {
 	store.Register("s3",
@@ -29,6 +27,7 @@ func init() {
 		})
 }
 
+// Store is a S3 transaction config store
 type Store struct {
 	data       s3iface.S3API // S3 data source object.
 	bucketName string        // Name of the bucket to store data.
@@ -43,11 +42,11 @@ func New(uri string) (*Store, error) {
 	u, err := url.Parse(uri)
 
 	if err != nil {
-		return nil, fmt.Errorf("%s failed to parse URI %s. Upstream error %w\n", moduleLogMessage, uri, err)
+		return nil, fmt.Errorf("store/s3: failed to parse URI: %w", err)
 	}
 
 	if u.Scheme != "s3" {
-		return nil, fmt.Errorf("%s invalid S3 scheme in URI %s. Scheme is %s. Upstream error %w\n", moduleLogMessage, uri, u.Scheme, fmt.Errorf("Invalid S3 URI"))
+		return nil, fmt.Errorf("store/s3: invalid S3 scheme in URI: %s", u.Scheme)
 	}
 
 	var awsconfig *aws.Config = aws.NewConfig()
@@ -67,7 +66,7 @@ func New(uri string) (*Store, error) {
 		sess, err = session.NewSession(awsconfig.WithRegion(reg[0]))
 
 		if err != nil {
-			return nil, fmt.Errorf("%s failed to create session. Upstream error %w\n", moduleLogMessage, err)
+			return nil, fmt.Errorf("store/s3: failed to create session: %w", err)
 		}
 	}
 
@@ -92,7 +91,7 @@ func (s *Store) Delete(name string) error {
 	_, err := s.data.DeleteObject(input)
 
 	if err != nil {
-		return fmt.Errorf("%s failed to delete object %s. Upstream error %w\n", moduleLogMessage, name, err)
+		return fmt.Errorf("store/s3: failed to delete object: %w", err)
 	}
 
 	return nil
@@ -113,9 +112,9 @@ func (s *Store) Get(name string) (config transaction.Config, err error) {
 		if aerr, ok := err.(awserr.Error); ok { // If there was an error, map it into application errors
 			switch aerr.Code() {
 			case s3.ErrCodeNoSuchKey:
-				return config, fmt.Errorf("%s transaction %s not found. %w\n", moduleLogMessage, *input.Key, store.ErrTransactionNotFound)
+				return config, store.ErrTransactionNotFound
 			default:
-				return config, fmt.Errorf("%s failed to retrieve object %s. %w\n", moduleLogMessage, *input.Key, err)
+				return config, fmt.Errorf("store/s3: failed to retrieve object: %w", err)
 			}
 		}
 
@@ -150,7 +149,7 @@ func (s *Store) Has(name string) (exists bool, err error) {
 			case s3.ErrCodeNoSuchKey:
 				return false, nil
 			default:
-				return false, fmt.Errorf("%s failed to retrieve object %s. %w\n", moduleLogMessage, name, err)
+				return false, fmt.Errorf("store/s3: failed to retrieve object: %w", err)
 			}
 		}
 
@@ -171,7 +170,7 @@ func (s *Store) Iter(callback func(name string, config transaction.Config) (proc
 	outputs, err := s.data.ListObjects(listObjectInput)
 
 	if err != nil {
-		return fmt.Errorf("%s failed to list object with prefix %s. %w\n", moduleLogMessage, s.prefix, err)
+		return fmt.Errorf("store/s3: failed to list objects: %w", err)
 	}
 
 	for _, object := range outputs.Contents {
@@ -208,7 +207,7 @@ func (s *Store) Set(name string, config transaction.Config) (err error) {
 	_, err = s.data.PutObject(input)
 
 	if err != nil {
-		return fmt.Errorf("%s failed to put object %s. %w\n", moduleLogMessage, *input.Key, err)
+		return fmt.Errorf("store/s3: failed to put object: %w", err)
 	}
 
 	return nil
