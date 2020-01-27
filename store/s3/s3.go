@@ -20,6 +20,8 @@ import (
 
 var _ store.Store = (*Store)(nil)
 
+const moduleLogMessage = "store/s3:"
+
 func init() {
 	store.Register("s3",
 		func(uri string) (s store.Store, err error) {
@@ -41,11 +43,11 @@ func New(uri string) (*Store, error) {
 	u, err := url.Parse(uri)
 
 	if err != nil {
-		return nil, wrapError(fmt.Sprintf("failed to parse URI %s", uri), err)
+		return nil, fmt.Errorf("%s failed to parse URI %s. Upstream error %w\n", moduleLogMessage, uri, err)
 	}
 
 	if u.Scheme != "s3" {
-		return nil, wrapError(fmt.Sprintf("invalid S3 scheme in URI %s. Scheme is %s", uri, u.Scheme), fmt.Errorf("Invalid S3 URI"))
+		return nil, fmt.Errorf("%s invalid S3 scheme in URI %s. Scheme is %s. Upstream error %w\n", moduleLogMessage, uri, u.Scheme, fmt.Errorf("Invalid S3 URI"))
 	}
 
 	var awsconfig *aws.Config = aws.NewConfig()
@@ -65,7 +67,7 @@ func New(uri string) (*Store, error) {
 		sess, err = session.NewSession(awsconfig.WithRegion(reg[0]))
 
 		if err != nil {
-			return nil, wrapError("failed to create session", err)
+			return nil, fmt.Errorf("%s failed to create session. Upstream error %w\n", moduleLogMessage, err)
 		}
 	}
 
@@ -90,7 +92,7 @@ func (s *Store) Delete(name string) error {
 	_, err := s.data.DeleteObject(input)
 
 	if err != nil {
-		return wrapError(fmt.Sprintf("failed to delete object %s", name), err)
+		return fmt.Errorf("%s failed to delete object %s. Upstream error %w\n", moduleLogMessage, name, err)
 	}
 
 	return nil
@@ -111,9 +113,9 @@ func (s *Store) Get(name string) (config transaction.Config, err error) {
 		if aerr, ok := err.(awserr.Error); ok { // If there was an error, map it into application errors
 			switch aerr.Code() {
 			case s3.ErrCodeNoSuchKey:
-				return config, store.ErrTransactionNotFound
+				return config, fmt.Errorf("%s transaction %s not found. %w\n", moduleLogMessage, input.Key, store.ErrTransactionNotFound)
 			default:
-				return config, wrapError(fmt.Sprintf("failed to retrieve object %s", name), err)
+				return config, fmt.Errorf("%s failed to retrieve object %s. %w\n", moduleLogMessage, input.Key, err)
 			}
 		}
 
@@ -148,7 +150,7 @@ func (s *Store) Has(name string) (exists bool, err error) {
 			case s3.ErrCodeNoSuchKey:
 				return false, nil
 			default:
-				return false, wrapError(fmt.Sprintf("failed to retrieve object %s", name), err)
+				return false, fmt.Errorf("%s failed to retrieve object %s. %w\n", moduleLogMessage, name, err)
 			}
 		}
 
@@ -169,7 +171,7 @@ func (s *Store) Iter(callback func(name string, config transaction.Config) (proc
 	outputs, err := s.data.ListObjects(listObjectInput)
 
 	if err != nil {
-		return wrapError(fmt.Sprintf("failed to list object with prefix %s", s.prefix), err)
+		return fmt.Errorf("%s failed to list object with prefix %s. %w\n", moduleLogMessage, s.prefix, err)
 	}
 
 	for _, object := range outputs.Contents {
@@ -206,15 +208,8 @@ func (s *Store) Set(name string, config transaction.Config) (err error) {
 	_, err = s.data.PutObject(input)
 
 	if err != nil {
-		return wrapError("failed to put object", err)
+		return fmt.Errorf("%s failed to put object %s. %w\n", moduleLogMessage, input.Key, err)
 	}
 
 	return nil
-}
-
-// wrapError function is basically a wrapper for the errors inside this package in order to avoid repeating some strings.
-// receives a string with the specific message for that error and receives an error which is the upstream error to this one.
-// returns a new error in a proper format
-func wrapError(message string, err error) error {
-	return fmt.Errorf("store/s3: %s %w", message, err)
 }
