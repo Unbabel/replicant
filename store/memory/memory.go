@@ -1,9 +1,9 @@
 package memory
 
 import (
-	"github.com/brunotm/replicant/internal/xz"
-	"github.com/brunotm/replicant/store"
-	"github.com/brunotm/replicant/transaction"
+	"github.com/Unbabel/replicant/internal/xz"
+	"github.com/Unbabel/replicant/store"
+	"github.com/Unbabel/replicant/transaction"
 )
 
 var _ store.Store = (*Store)(nil)

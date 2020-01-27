@@ -25,8 +25,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/brunotm/replicant/log"
-	"github.com/brunotm/replicant/manager"
+	"github.com/Unbabel/replicant/log"
+	"github.com/Unbabel/replicant/manager"
 	"github.com/julienschmidt/httprouter"
 )
 

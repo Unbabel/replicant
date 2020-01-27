@@ -3,12 +3,12 @@ package config
 import (
 	"time"
 
-	"github.com/brunotm/replicant/driver/web"
-	"github.com/brunotm/replicant/emitter/elasticsearch"
-	"github.com/brunotm/replicant/emitter/prometheus"
-	"github.com/brunotm/replicant/emitter/stdout"
-	"github.com/brunotm/replicant/internal/webhook"
-	"github.com/brunotm/replicant/server"
+	"github.com/Unbabel/replicant/driver/web"
+	"github.com/Unbabel/replicant/emitter/elasticsearch"
+	"github.com/Unbabel/replicant/emitter/prometheus"
+	"github.com/Unbabel/replicant/emitter/stdout"
+	"github.com/Unbabel/replicant/internal/webhook"
+	"github.com/Unbabel/replicant/server"
 )
 
 // Config for replicant

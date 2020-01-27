@@ -12,8 +12,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
-	"github.com/brunotm/replicant/store"
-	"github.com/brunotm/replicant/transaction"
+	"github.com/Unbabel/replicant/store"
+	"github.com/Unbabel/replicant/transaction"
 	"net/url"
 	"strings"
 )
@@ -113,9 +113,9 @@ func (s *Store) Get(name string) (config transaction.Config, err error) {
 		if aerr, ok := err.(awserr.Error); ok { // If there was an error, map it into application errors
 			switch aerr.Code() {
 			case s3.ErrCodeNoSuchKey:
-				return config, fmt.Errorf("%s transaction %s not found. %w\n", moduleLogMessage, input.Key, store.ErrTransactionNotFound)
+				return config, fmt.Errorf("%s transaction %s not found. %w\n", moduleLogMessage, *input.Key, store.ErrTransactionNotFound)
 			default:
-				return config, fmt.Errorf("%s failed to retrieve object %s. %w\n", moduleLogMessage, input.Key, err)
+				return config, fmt.Errorf("%s failed to retrieve object %s. %w\n", moduleLogMessage, *input.Key, err)
 			}
 		}
 
@@ -208,7 +208,7 @@ func (s *Store) Set(name string, config transaction.Config) (err error) {
 	_, err = s.data.PutObject(input)
 
 	if err != nil {
-		return fmt.Errorf("%s failed to put object %s. %w\n", moduleLogMessage, input.Key, err)
+		return fmt.Errorf("%s failed to put object %s. %w\n", moduleLogMessage, *input.Key, err)
 	}
 
 	return nil

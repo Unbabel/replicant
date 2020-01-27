@@ -23,7 +23,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/brunotm/replicant/transaction"
+	"github.com/Unbabel/replicant/transaction"
 	"github.com/olivere/elastic/v7"
 )
 

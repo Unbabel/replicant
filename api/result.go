@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/brunotm/replicant/server"
-	"github.com/brunotm/replicant/transaction"
+	"github.com/Unbabel/replicant/server"
+	"github.com/Unbabel/replicant/transaction"
 )
 
 // GetResult of managed replicant transactions by name

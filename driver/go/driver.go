@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/brunotm/replicant/transaction"
+	"github.com/Unbabel/replicant/transaction"
 	"github.com/containous/yaegi/interp"
 	"github.com/containous/yaegi/stdlib"
 )

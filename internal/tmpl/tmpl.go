@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"text/template"
 
-	"github.com/brunotm/replicant/transaction"
+	"github.com/Unbabel/replicant/transaction"
 )
 
 // Parse the script within the transaction with the defined transaction inputs

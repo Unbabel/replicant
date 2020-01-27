@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/brunotm/replicant/store"
-	"github.com/brunotm/replicant/transaction"
+	"github.com/Unbabel/replicant/store"
+	"github.com/Unbabel/replicant/transaction"
 	"github.com/syndtr/goleveldb/leveldb"
 )
 

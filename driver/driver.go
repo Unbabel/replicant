@@ -16,7 +16,7 @@ package driver
    limitations under the License.
 */
 
-import "github.com/brunotm/replicant/transaction"
+import "github.com/Unbabel/replicant/transaction"
 
 // Driver is the transaction driver interface which is used to instantiate
 // transactions from a transaction configuration

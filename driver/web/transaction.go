@@ -29,8 +29,8 @@ import (
 	"github.com/MontFerret/ferret/pkg/drivers/cdp"
 	"github.com/MontFerret/ferret/pkg/runtime"
 	"github.com/MontFerret/ferret/pkg/runtime/logging"
-	"github.com/brunotm/replicant/log"
-	"github.com/brunotm/replicant/transaction"
+	"github.com/Unbabel/replicant/log"
+	"github.com/Unbabel/replicant/transaction"
 )
 
 // Transaction is a pre-compiled replicant transaction for web applications
