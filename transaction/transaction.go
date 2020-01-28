@@ -19,7 +19,7 @@ package transaction
 import (
 	"context"
 
-	"github.com/brunotm/replicant/transaction/callback"
+	"github.com/Unbabel/replicant/transaction/callback"
 )
 
 // Transaction is a test executor. It can be run many times.

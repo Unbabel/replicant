@@ -23,9 +23,9 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/brunotm/replicant/server"
-	"github.com/brunotm/replicant/transaction"
-	"github.com/brunotm/replicant/transaction/callback"
+	"github.com/Unbabel/replicant/server"
+	"github.com/Unbabel/replicant/transaction"
+	"github.com/Unbabel/replicant/transaction/callback"
 	"github.com/segmentio/ksuid"
 	"gopkg.in/yaml.v2"
 )

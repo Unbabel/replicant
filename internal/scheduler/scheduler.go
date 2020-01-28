@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/brunotm/replicant/log"
+	"github.com/Unbabel/replicant/log"
 	"github.com/robfig/cron/v3"
 )
 

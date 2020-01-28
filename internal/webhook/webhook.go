@@ -22,8 +22,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/brunotm/replicant/internal/xz"
-	"github.com/brunotm/replicant/transaction/callback"
+	"github.com/Unbabel/replicant/internal/xz"
+	"github.com/Unbabel/replicant/transaction/callback"
 	"github.com/julienschmidt/httprouter"
 )
 

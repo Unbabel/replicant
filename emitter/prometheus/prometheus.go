@@ -22,7 +22,7 @@ import (
 
 	"strings"
 
-	"github.com/brunotm/replicant/transaction"
+	"github.com/Unbabel/replicant/transaction"
 	"github.com/julienschmidt/httprouter"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"

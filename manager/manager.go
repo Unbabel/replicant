@@ -21,14 +21,14 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/brunotm/replicant/driver"
-	"github.com/brunotm/replicant/internal/scheduler"
-	"github.com/brunotm/replicant/internal/tmpl"
-	"github.com/brunotm/replicant/internal/xz"
-	"github.com/brunotm/replicant/log"
-	"github.com/brunotm/replicant/store"
-	"github.com/brunotm/replicant/transaction"
-	"github.com/brunotm/replicant/transaction/callback"
+	"github.com/Unbabel/replicant/driver"
+	"github.com/Unbabel/replicant/internal/scheduler"
+	"github.com/Unbabel/replicant/internal/tmpl"
+	"github.com/Unbabel/replicant/internal/xz"
+	"github.com/Unbabel/replicant/log"
+	"github.com/Unbabel/replicant/store"
+	"github.com/Unbabel/replicant/transaction"
+	"github.com/Unbabel/replicant/transaction/callback"
 	"github.com/segmentio/ksuid"
 )
 

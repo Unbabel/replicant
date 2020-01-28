@@ -5,7 +5,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/brunotm/replicant/transaction"
+	"github.com/Unbabel/replicant/transaction"
 )
 
 func TestNew(t *testing.T) {

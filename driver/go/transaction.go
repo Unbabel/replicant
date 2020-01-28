@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/brunotm/replicant/transaction"
-	"github.com/brunotm/replicant/transaction/callback"
+	"github.com/Unbabel/replicant/transaction"
+	"github.com/Unbabel/replicant/transaction/callback"
 )
 
 // TxFunc is the Run function signature which will be called from the provided go code.

@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/brunotm/replicant/internal/tmpl"
-	"github.com/brunotm/replicant/transaction"
+	"github.com/Unbabel/replicant/internal/tmpl"
+	"github.com/Unbabel/replicant/transaction"
 )
 
 func TestDriverTransaction(t *testing.T) {

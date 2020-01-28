@@ -1,8 +1,8 @@
-# ![Replicant](https://raw.githubusercontent.com/brunotm/replicant/master/doc/logo.png)
+# ![Replicant](https://raw.githubusercontent.com/Unbabel/replicant/master/doc/logo.png)
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/brunotm/replicant?style=flat-square)](https://goreportcard.com/report/github.com/brunotm/replicant)
-[![GoDoc](https://img.shields.io/badge/api-reference-blue.svg?style=flat-square)](https://godoc.org/github.com/brunotm/replicant)
-[![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/brunotm/replicant?style=flat-square)](https://hub.docker.com/r/brunotm/replicant)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Unbabel/replicant?style=flat-square)](https://goreportcard.com/report/github.com/Unbabel/replicant)
+[![GoDoc](https://img.shields.io/badge/api-reference-blue.svg?style=flat-square)](https://godoc.org/github.com/Unbabel/replicant)
+[![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/Unbabel/replicant?style=flat-square)](https://hub.docker.com/r/Unbabel/replicant)
 
 Replicant is a synthetic transaction execution framework named after the bioengineered androids from Blade Runner. (all synthetics came from Blade Runner :)
 
@@ -22,7 +22,7 @@ It allows web application testing using chromedp, and api application testing us
 
 ## Running the replicant server locally with docker
 
-Using [example config](https://github.com/brunotm/replicant/blob/master/example-config.yaml) from the project root dir.
+Using [example config](https://github.com/Unbabel/replicant/blob/master/example-config.yaml) from the project root dir.
 
 ```bash
 docker stack deploy -c $PWD/docker-compose.yaml replicant
@@ -318,4 +318,4 @@ Bruno Moura [brunotm@gmail.com](mailto:brunotm@gmail.com)
 
 ## License
 
-Replicant source code is available under the Apache Version 2.0 [License](https://github.com/brunotm/replicant/blob/master/LICENSE)
+Replicant source code is available under the Apache Version 2.0 [License](https://github.com/Unbabel/replicant/blob/master/LICENSE)

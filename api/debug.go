@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"net/http/pprof"
 
-	"github.com/brunotm/replicant/server"
+	"github.com/Unbabel/replicant/server"
 )
 
 // AddDebugRoutes add routes for serving runtime profiling data

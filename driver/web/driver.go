@@ -22,7 +22,7 @@ import (
 	"time"
 
 	"github.com/MontFerret/ferret/pkg/compiler"
-	"github.com/brunotm/replicant/transaction"
+	"github.com/Unbabel/replicant/transaction"
 )
 
 // Driver for web based transactions using the chrome developer protocol
