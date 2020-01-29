@@ -29,7 +29,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-// Config for prometheus emitter
+// Emitter for prometheus
 type Emitter struct {
 	config         Config
 	runs           prometheus.Counter
