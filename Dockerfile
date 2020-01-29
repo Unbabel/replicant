@@ -1,6 +1,6 @@
 FROM golang:alpine AS builder
 RUN apk --no-cache add git make
-ADD . /src/replicant
+COPY . /src/replicant
 WORKDIR /src/replicant
 RUN make build
 
