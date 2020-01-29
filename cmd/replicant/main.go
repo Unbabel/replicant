@@ -34,8 +34,13 @@ var (
 	writeConfig       = flag.Bool("write", false, "write default configuration")
 	configFile        = flag.String("config", "", "replicant configuration file")
 
-	Version   string
+	// Version set by the build
+	Version string
+
+	// GitCommit set by the build
 	GitCommit string
+
+	// BuildTime set by the build
 	BuildTime string
 )
 

@@ -45,7 +45,7 @@ func AddAllRoutes(prefix string, server *server.Server) {
 	server.AddServerHandler(http.MethodGet, prefix+`/v1/result/:name`, GetResult)
 }
 
-// httpError wraps http status codes and error messages as json reponses
+// httpError wraps http status codes and error messages as json responses
 func httpError(w http.ResponseWriter, err error, code int) {
 	var result Result
 	result.Error = err.Error()
