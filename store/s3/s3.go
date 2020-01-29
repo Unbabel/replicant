@@ -6,6 +6,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net/url"
+	"strings"
+
 	"github.com/Unbabel/replicant/store"
 	"github.com/Unbabel/replicant/transaction"
 	"github.com/aws/aws-sdk-go/aws"
@@ -13,9 +16,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3iface"
-	"net/url"
-	"strings"
 )
 
 var _ store.Store = (*Store)(nil)
@@ -27,11 +27,19 @@ func init() {
 		})
 }
 
+// minimal S3 interface for store implementation
+type s3i interface {
+	DeleteObject(input *s3.DeleteObjectInput) (*s3.DeleteObjectOutput, error)
+	GetObject(input *s3.GetObjectInput) (*s3.GetObjectOutput, error)
+	ListObjects(input *s3.ListObjectsInput) (*s3.ListObjectsOutput, error)
+	PutObject(input *s3.PutObjectInput) (*s3.PutObjectOutput, error)
+}
+
 // Store is a S3 transaction config store
 type Store struct {
-	data       s3iface.S3API // S3 data source object.
-	bucketName string        // Name of the bucket to store data.
-	prefix     string        // Path inside the bucket to use as prefix.
+	data       s3i    // S3 data source object.
+	bucketName string // Name of the bucket to store data.
+	prefix     string // Path inside the bucket to use as prefix.
 }
 
 // New function creates a new storage object with a subtype of s3.
