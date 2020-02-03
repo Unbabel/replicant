@@ -1,3 +1,4 @@
+// Package stdout implements a result exporter the standard output.
 package stdout
 
 /*

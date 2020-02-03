@@ -1,3 +1,4 @@
+// Package log implements a common structured logger.
 package log
 
 import (

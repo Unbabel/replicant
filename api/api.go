@@ -1,3 +1,4 @@
+// Package api implements the replicant API handlers.
 package api
 
 /*

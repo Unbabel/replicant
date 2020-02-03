@@ -1,3 +1,5 @@
+// Package manager implements a transaction manager for running and maintaining
+// test transactions.
 package manager
 
 /*

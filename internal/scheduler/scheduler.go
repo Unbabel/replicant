@@ -1,3 +1,4 @@
+// Package scheduler implements a task scheduler for transactions.
 package scheduler
 
 /*

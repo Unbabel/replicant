@@ -1,3 +1,4 @@
+// Package javascript implements a javascript transaction driver.
 package javascript
 
 import (

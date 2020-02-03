@@ -1,3 +1,5 @@
+// Package config implements a the common configuration and defaults for all
+// replicant configuration
 package config
 
 import (

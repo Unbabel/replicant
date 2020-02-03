@@ -1,3 +1,4 @@
+// Package memory implements a simple in-memory transaction store.
 package memory
 
 import (

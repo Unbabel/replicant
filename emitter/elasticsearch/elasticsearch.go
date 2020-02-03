@@ -1,3 +1,4 @@
+// Package elasticsearch implements a result emitter for elasticsearch.
 package elasticsearch
 
 /*

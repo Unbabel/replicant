@@ -1,3 +1,5 @@
+// Package transaction implements the main types for defining, running and emitting
+// replicant test data.
 package transaction
 
 /*
