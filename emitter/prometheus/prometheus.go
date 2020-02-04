@@ -1,3 +1,4 @@
+// Package prometheus implements a result exporter for prometheus.
 package prometheus
 
 /*

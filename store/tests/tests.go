@@ -1,3 +1,4 @@
+// Package tests implements a test suite for store drivers.
 package tests
 
 import (

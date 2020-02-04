@@ -1,3 +1,4 @@
+// Package web implements a web transaction driver based on chromedp/FQL.
 package web
 
 /*

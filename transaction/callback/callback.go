@@ -1,3 +1,4 @@
+// Package callback implements a facilities for listening to asynchronous test responses.
 package callback
 
 /*

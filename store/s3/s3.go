@@ -1,5 +1,4 @@
 // Package s3 provides implementation of the storage layer under AWS S3 service.
-// This package is a part of the storage packages in replicant.
 package s3
 
 import (

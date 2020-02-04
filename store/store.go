@@ -1,3 +1,7 @@
+/*
+Package store implements a simple interface and registry for
+transaction stores.
+*/
 package store
 
 import (

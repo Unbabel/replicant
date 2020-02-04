@@ -1,3 +1,4 @@
+// Package tmpl implements transaction template utils.
 package tmpl
 
 import (

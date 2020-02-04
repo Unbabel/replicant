@@ -1,3 +1,4 @@
+// Package xz implements internal utilities that mimics standard library counterparts.
 package xz
 
 import "sync"
@@ -32,8 +33,6 @@ func (m *Map) Delete(key interface{}) {
 	m.mtx.Lock()
 	delete(m.data, key)
 	m.mtx.Unlock()
-
-	return
 }
 
 // Load returns the value stored in the map for a key, or nil if no value is present.
@@ -83,8 +82,6 @@ func (m *Map) Range(f func(key, value interface{}) bool) {
 		}
 		x++
 	}
-
-	return
 }
 
 // Store sets the value for a key.
@@ -92,8 +89,6 @@ func (m *Map) Store(key, value interface{}) {
 	m.mtx.Lock()
 	m.data[key] = value
 	m.mtx.Unlock()
-
-	return
 }
 
 // Clear the map contents but retains the allocated shards.
@@ -103,6 +98,4 @@ func (m *Map) Clear() {
 		delete(m.data, k)
 	}
 	m.mtx.Unlock()
-
-	return
 }

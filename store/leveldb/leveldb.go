@@ -1,3 +1,4 @@
+// Package leveldb implements a simple leveldb transaction store.
 package leveldb
 
 import (

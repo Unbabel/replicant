@@ -1,3 +1,4 @@
+// Package server implements the replicant server API.
 package server
 
 /*
@@ -107,13 +108,13 @@ func (s *Server) AddHandler(method, path string, handler Handler) {
 }
 
 // AddServerHandler adds a handler for the given method and path
-func (s *Server) AddServerHandler(method, path string, handler ServerHandler) {
+func (s *Server) AddServerHandler(method, path string, handler SHandler) {
 	log.Info("adding handler").String("path", path).String("method", method).Log()
 	s.router.Handle(method, path, logger(recovery(handler(s))))
 }
 
-// ServerHandler is handler that has access to the server
-type ServerHandler func(*Server) httprouter.Handle
+// SHandler is handler that has access to the server
+type SHandler func(*Server) Handler
 
 // Handler is a http handler
 type Handler = httprouter.Handle

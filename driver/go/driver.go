@@ -1,3 +1,4 @@
+// Package gd implements a Go transaction driver.
 package gd
 
 /*
