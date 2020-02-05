@@ -32,7 +32,7 @@ func TestDriverTransaction(t *testing.T) {
 	})
 
 	server := &http.Server{}
-	server.Addr = "127.0.0.1:8080"
+	server.Addr = "localhost:8080"
 	server.Handler = mux
 	go server.ListenAndServe()
 	defer server.Close()
@@ -74,7 +74,7 @@ var config transaction.Config = transaction.Config{
 	Timeout:    "5s",
 	RetryCount: 1,
 	Inputs: map[string]interface{}{
-		"url":   "http://127.0.0.1:8080/test",
+		"url":   "http://localhost:8080/test",
 		"text":  "blade runner",
 		"xauth": "Joi",
 	},
