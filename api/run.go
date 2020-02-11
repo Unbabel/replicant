@@ -91,6 +91,7 @@ func RunTransaction(srv *server.Server) (handle server.Handler) {
 		buf, err = json.Marshal(&result)
 		if err != nil {
 			httpError(w, fmt.Errorf("error serializing results: %w", err), http.StatusInternalServerError)
+			return
 		}
 
 		w.WriteHeader(http.StatusOK)
