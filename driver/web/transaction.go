@@ -92,7 +92,7 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 		}
 
 		if len(r) == 0 {
-			return result
+			break
 		}
 
 		if err = json.Unmarshal(r, &result); err != nil {
