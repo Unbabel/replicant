@@ -17,10 +17,13 @@ package web
 */
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net"
+	"net/http"
 	"net/url"
 	"strings"
 	"time"
@@ -39,6 +42,7 @@ type Transaction struct {
 	server       *url.URL
 	timeout      time.Duration
 	program      *runtime.Program
+	proxied      bool
 	dnsDiscovery bool
 }
 
@@ -71,29 +75,62 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 		return result
 	}
 
-	log.Debug("driver/web: chromedp server").String("address", cdpAddr).Log()
-	ctx = drivers.WithContext(
-		ctx, cdp.NewDriver(cdp.WithAddress(cdpAddr)),
-		drivers.AsDefault())
+	switch t.proxied {
+	case false:
+		log.Debug("driver/web: chromedp server").String("address", cdpAddr).Log()
+		drv := cdp.NewDriver(cdp.WithAddress(cdpAddr))
+		defer drv.Close()
 
-	// runtime.WithLog runtime.WithLogFields runtime.WithLogLevel
-	r, err := t.program.Run(ctx, runtime.WithLogLevel(logging.ErrorLevel))
+		ctx = drivers.WithContext(ctx, drv, drivers.AsDefault())
+
+		// runtime.WithLog runtime.WithLogFields runtime.WithLogLevel
+		r, err := t.program.Run(ctx, runtime.WithLogLevel(logging.ErrorLevel))
+
+		if err != nil {
+			result.Error = fmt.Errorf("driver/web: error running transaction script: %w", err)
+			result.Failed = true
+		}
+
+		if len(r) == 0 {
+			break
+		}
+
+		if err = json.Unmarshal(r, &result); err != nil {
+			result.Error = fmt.Errorf("driver/web: error deserializing result data: %w", err)
+			result.Failed = true
+			result.Data = string(r)
+		}
+
+	case true:
+		log.Debug("driver/web: chromedp proxied server").String("address", cdpAddr).Log()
+		// TODO handle errors
+		buf, _ := json.Marshal(t.config)
+		req, _ := http.NewRequestWithContext(ctx, http.MethodPost, cdpAddr, bytes.NewReader(buf))
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			result.Error = err
+			result.Failed = true
+			break
+		}
+		defer resp.Body.Close()
+
+		buf, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			result.Error = fmt.Errorf("driver/web: error reading proxied result data: %w", err)
+			result.Failed = true
+			break
+		}
+
+		if err = json.Unmarshal(buf, &result); err != nil {
+			result.Error = fmt.Errorf("driver/web: error deserializing proxied result data: %w", err)
+			result.Failed = true
+			result.Data = string(buf)
+		}
+
+	}
+
 	result.DurationSeconds = time.Since(result.Time).Seconds()
-
-	if err != nil {
-		result.Error = fmt.Errorf("driver/web: error running transaction script: %w", err)
-		result.Failed = true
-	}
-
-	if len(r) == 0 {
-		return result
-	}
-
-	if err = json.Unmarshal(r, &result); err != nil {
-		result.Error = fmt.Errorf("driver/web: error deserializing result data: %w", err)
-		result.Data = string(r)
-	}
-
 	return result
 }
 

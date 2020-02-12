@@ -6,6 +6,5 @@ WORKDIR /src/replicant
 RUN make build
 
 FROM alpine
-WORKDIR /app
 COPY --from=builder /src/replicant/replicant /app/
 CMD ["/app/replicant"]

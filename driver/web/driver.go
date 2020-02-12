@@ -42,6 +42,9 @@ type Config struct {
 	// requests. This needed when using multiple cdp servers that are load balanced
 	// by DNS round robin, like a kubernetes headless service.
 	DNSDiscovery bool `json:"dns_discovery" yaml:"dns_discovery"`
+
+	// Connections to the specified CDP server are proxied by replicant
+	Proxied bool `json:"proxied" yaml:"proxied"`
 }
 
 // New creates a new web driver
@@ -57,6 +60,7 @@ func (d *Driver) Type() (t string) {
 // New creates a web transaction
 func (d *Driver) New(config transaction.Config) (tx transaction.Transaction, err error) {
 	txn := &Transaction{}
+	txn.proxied = d.config.Proxied
 
 	serverURL := d.config.ServerURL
 	s, ok := config.Inputs["cdp_address"]

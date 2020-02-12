@@ -11,6 +11,7 @@ drivers:
   web:
     server_url: http://replicant_cdp:9222     # URL of the CDP server for web application transactions, can by overridden by the cdp_address in transaction inputs
     dns_discovery: true                       # Discover servers IP address from DNS
+    proxied: true                             # Proxy chromedp to a replicant executor 
 emitters:
   stdout:                                     # Emit results to standard output in JSON format
     pretty: false                             # Pretty printing of JSON results

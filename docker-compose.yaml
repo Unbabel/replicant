@@ -2,7 +2,7 @@ version: "3.7"
 
 services:
   server:
-    image: docker.io/brunotm/replicant:latest
+    image: docker.io/unbabel/replicant:latest
     ports:
       - "8080:8080"
     volumes:
@@ -11,12 +11,10 @@ services:
       - config.yaml
     command: /app/replicant -config /config.yaml
   cdp:
-    image: docker.io/chromedp/headless-shell:stable
+    image: docker.io/unbabel/replicant:replicant-cdp-latest
     deploy:
       mode: replicated
       replicas: 2
-      endpoint_mode: dnsrr
-    command:  --headless --disable-gpu --disable-software-rasterizer --disable-dev-shm-usage --disable-background-networking --no-sandbox --no-zygote --disable-site-isolation-trials --remote-debugging-address=0.0.0.0 --remote-debugging-port=9222
 volumes:
   data: null
 configs:

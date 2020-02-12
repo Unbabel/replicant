@@ -58,6 +58,7 @@ var DefaultConfig = Config{
 		Web: web.Config{
 			ServerURL:    "http://127.0.0.1:9222",
 			DNSDiscovery: true,
+			Proxied:      false,
 		},
 	},
 
