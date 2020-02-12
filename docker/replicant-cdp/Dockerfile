@@ -1,15 +1,13 @@
+FROM golang:alpine AS builder
+RUN apk --no-cache add git make
+COPY . /src/replicant
+WORKDIR /src/replicant
+
+RUN make build
+
 FROM chromedp/headless-shell:stable
-
-RUN apt update \
-&& apt install -y dumb-init procps \
-&& apt-get clean \
-&& rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-COPY start.sh /
-RUN chmod 700 start.sh
-
-ENTRYPOINT ["dumb-init", "--"]
-
-CMD ["/start.sh"]
+COPY --from=builder /src/replicant/replicant-cdp /app/
+ENTRYPOINT []
+CMD ["/app/replicant-cdp"]
 
 
