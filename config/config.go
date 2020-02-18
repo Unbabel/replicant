@@ -5,7 +5,6 @@ package config
 import (
 	"time"
 
-	"github.com/Unbabel/replicant/driver/web"
 	"github.com/Unbabel/replicant/emitter/elasticsearch"
 	"github.com/Unbabel/replicant/emitter/prometheus"
 	"github.com/Unbabel/replicant/emitter/stdout"
@@ -15,19 +14,13 @@ import (
 
 // Config for replicant
 type Config struct {
-	Debug     bool           `json:"debug" yaml:"debug"`
-	LogLevel  string         `json:"log_level" yaml:"log_level"`
-	APIPrefix string         `json:"api_prefix" yaml:"api_prefix"`
-	StoreURI  string         `json:"store_path" yaml:"store_uri"`
-	Server    server.Config  `json:"server" yaml:"server"`
-	Drivers   DriverConfig   `json:"drivers" yaml:"drivers"`
-	Emitters  EmitterConfig  `json:"emitters" yaml:"emitters"`
-	Callbacks CallbackConfig `json:"callbacks" yaml:"callbacks"`
-}
-
-// DriverConfig optins
-type DriverConfig struct {
-	Web web.Config `json:"web" yaml:"web"`
+	Debug       bool           `json:"debug" yaml:"debug"`
+	LogLevel    string         `json:"log_level" yaml:"log_level"`
+	StoreURI    string         `json:"store_path" yaml:"store_uri"`
+	ExecutorURL string         `json:"executor_url" yaml:"executor_url"`
+	Server      server.Config  `json:"server" yaml:"server"`
+	Emitters    EmitterConfig  `json:"emitters" yaml:"emitters"`
+	Callbacks   CallbackConfig `json:"callbacks" yaml:"callbacks"`
 }
 
 // EmitterConfig options
@@ -44,9 +37,8 @@ type CallbackConfig struct {
 
 // DefaultConfig for replicant
 var DefaultConfig = Config{
-	LogLevel:  "INFO",
-	APIPrefix: "/api",
-	StoreURI:  "memory:-",
+	LogLevel: "INFO",
+	StoreURI: "memory:-",
 	Server: server.Config{
 		ListenAddress:     "0.0.0.0:8080",
 		WriteTimeout:      5 * time.Minute,
@@ -54,18 +46,10 @@ var DefaultConfig = Config{
 		ReadHeaderTimeout: 5 * time.Minute,
 	},
 
-	Drivers: DriverConfig{
-		Web: web.Config{
-			ServerURL:    "http://127.0.0.1:9222",
-			DNSDiscovery: true,
-			Proxied:      false,
-		},
-	},
-
 	Callbacks: CallbackConfig{
 		Webhook: webhook.Config{
 			AdvertiseURL: "http://0.0.0.0:8080",
-			PathPrefix:   "/api/callback",
+			PathPrefix:   "/callback",
 		},
 	},
 
