@@ -155,7 +155,7 @@ func logger(h Handler) (n Handler) {
 		sw := &statusWriter{ResponseWriter: w}
 		h(sw, r, p)
 		log.Info("api request").String("method", r.Method).
-			String("uri", r.URL.String()).
+			String("path", r.URL.String()).
 			String("requester", r.RemoteAddr).
 			Int("status", int64(sw.status)).
 			Int("content_length", int64(sw.length)).
@@ -177,7 +177,7 @@ func (w *statusWriter) WriteHeader(status int) {
 
 func (w *statusWriter) Write(b []byte) (int, error) {
 	if w.status == 0 {
-		w.status = 200
+		w.status = http.StatusOK
 	}
 	n, err := w.ResponseWriter.Write(b)
 	w.length += n
