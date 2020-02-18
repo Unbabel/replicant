@@ -17,33 +17,22 @@ package web
 */
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net"
-	"net/http"
-	"net/url"
-	"strings"
-	"time"
 
 	"github.com/MontFerret/ferret/pkg/drivers"
 	"github.com/MontFerret/ferret/pkg/drivers/cdp"
 	"github.com/MontFerret/ferret/pkg/runtime"
 	"github.com/MontFerret/ferret/pkg/runtime/logging"
-	"github.com/Unbabel/replicant/log"
 	"github.com/Unbabel/replicant/transaction"
 )
 
 // Transaction is a pre-compiled replicant transaction for web applications
 type Transaction struct {
-	config       transaction.Config
-	server       *url.URL
-	timeout      time.Duration
-	program      *runtime.Program
-	proxied      bool
-	dnsDiscovery bool
+	driver  *Driver
+	program *runtime.Program
+	config  transaction.Config
 }
 
 // Config returns the transaction config
@@ -53,112 +42,41 @@ func (t *Transaction) Config() (config transaction.Config) {
 
 // Run executes the web transaction
 func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
+	t.driver.m.RLock()
+	defer t.driver.m.RUnlock()
 
 	var err error
-
-	if t.timeout > 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, t.timeout)
-		defer cancel()
-	}
-
 	result.Name = t.config.Name
 	result.Driver = "web"
-	result.Time = time.Now()
 	result.Metadata = t.config.Metadata
 
-	cdpAddr, err := t.resolveAddr()
+	// handle browserless mode for testing
+	var drv *cdp.Driver
+	switch t.driver.config.testing {
+	case false:
+		drv = cdp.NewDriver(cdp.WithAddress(t.driver.config.ServerURL))
+	case true:
+		drv = cdp.NewDriver()
+	}
+	defer drv.Close()
+
+	ctx = drivers.WithContext(ctx, drv, drivers.AsDefault())
+
+	// runtime.WithLog runtime.WithLogFields runtime.WithLogLevel
+	r, err := t.program.Run(ctx, runtime.WithLogLevel(logging.ErrorLevel))
+
 	if err != nil {
-		result.Error = fmt.Errorf("driver/web: %w", err)
-		result.Message = "failed to handle cdp url"
-		result.DurationSeconds = time.Since(result.Time).Seconds()
-		return result
+		result.Error = fmt.Errorf("driver/web: error running transaction script: %w", err)
+		result.Failed = true
 	}
 
-	switch t.proxied {
-	case false:
-		log.Debug("driver/web: chromedp server").String("address", cdpAddr).Log()
-		drv := cdp.NewDriver(cdp.WithAddress(cdpAddr))
-		defer drv.Close()
-
-		ctx = drivers.WithContext(ctx, drv, drivers.AsDefault())
-
-		// runtime.WithLog runtime.WithLogFields runtime.WithLogLevel
-		r, err := t.program.Run(ctx, runtime.WithLogLevel(logging.ErrorLevel))
-
-		if err != nil {
-			result.Error = fmt.Errorf("driver/web: error running transaction script: %w", err)
-			result.Failed = true
-		}
-
-		if len(r) == 0 {
-			break
-		}
-
+	if len(r) != 0 {
 		if err = json.Unmarshal(r, &result); err != nil {
 			result.Error = fmt.Errorf("driver/web: error deserializing result data: %w", err)
 			result.Failed = true
 			result.Data = string(r)
 		}
-
-	case true:
-		log.Debug("driver/web: chromedp proxied server").String("address", cdpAddr).Log()
-		// TODO handle errors
-		buf, _ := json.Marshal(t.config)
-		req, _ := http.NewRequestWithContext(ctx, http.MethodPost, cdpAddr, bytes.NewReader(buf))
-
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			result.Error = err
-			result.Failed = true
-			break
-		}
-		defer resp.Body.Close()
-
-		buf, err = ioutil.ReadAll(resp.Body)
-		if err != nil {
-			result.Error = fmt.Errorf("driver/web: error reading proxied result data: %w", err)
-			result.Failed = true
-			break
-		}
-
-		if err = json.Unmarshal(buf, &result); err != nil {
-			result.Error = fmt.Errorf("driver/web: error deserializing proxied result data: %w", err)
-			result.Failed = true
-			result.Data = string(buf)
-		}
-
 	}
 
-	result.DurationSeconds = time.Since(result.Time).Seconds()
 	return result
-}
-
-// resolveAddr parses the cdp URL and converts the hostname into an ip address
-// to ensure we talk with the same cdp server during the whole transaction lifecycle
-// and avoid invalid sessions when dealing with DNS load balacing (e.g. headless k8s services)
-func (t *Transaction) resolveAddr() (a string, err error) {
-	serverURL := t.server.String()
-	serverHostname := t.server.Hostname()
-
-	if !t.dnsDiscovery {
-		return serverURL, nil
-	}
-
-	// check if address is already an ip address
-	if ip := net.ParseIP(serverHostname); ip != nil {
-		return serverURL, nil
-	}
-
-	// resolve server ip addr
-	ips, err := net.LookupIP(serverHostname)
-	if err != nil {
-		return "", fmt.Errorf("error resolving cdp_server name: %w", err)
-	}
-
-	if len(ips) == 0 {
-		return "", fmt.Errorf("could not resolve hostname in %s", serverHostname)
-	}
-
-	return strings.Replace(serverURL, serverHostname, ips[0].String(), 1), nil
 }

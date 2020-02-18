@@ -20,14 +20,21 @@ package web
 import (
 	"fmt"
 	"net/url"
+	"os/exec"
+	"sync"
+	"syscall"
 	"time"
 
 	"github.com/MontFerret/ferret/pkg/compiler"
+	"github.com/Unbabel/replicant/log"
 	"github.com/Unbabel/replicant/transaction"
 )
 
 // Driver for web based transactions using the chrome developer protocol
 type Driver struct {
+	m      sync.RWMutex
+	cmd    *exec.Cmd
+	close  chan struct{}
 	config Config
 }
 
@@ -43,13 +50,39 @@ type Config struct {
 	// by DNS round robin, like a kubernetes headless service.
 	DNSDiscovery bool `json:"dns_discovery" yaml:"dns_discovery"`
 
-	// Connections to the specified CDP server are proxied by replicant
-	Proxied bool `json:"proxied" yaml:"proxied"`
+	// Path to chrome binary
+	BinaryPath string `json:"binary_path" yaml:"binary_path"`
+
+	// Arguments for launching chrome
+	BinaryArgs []string `json:"binary_path" yaml:"binary_path"`
+
+	// Interval for recycling chrome processes
+	RecycleInterval time.Duration
+
+	// for testing only
+	testing bool
 }
 
 // New creates a new web driver
-func New(c Config) (d *Driver) {
-	return &Driver{c}
+func New(c Config) (d *Driver, err error) {
+	if c.ServerURL == "" || c.BinaryPath == "" {
+		return nil, fmt.Errorf("driver/web: no chrome binary or server URL specified")
+	}
+
+	_, err = url.Parse(c.ServerURL)
+	if err != nil {
+		return nil, fmt.Errorf("driver/web: could not parse chrome server url: %w", err)
+	}
+
+	d = &Driver{config: c, close: make(chan struct{})}
+
+	if d.config.BinaryPath != "" {
+		if err = d.monitor(); err != nil {
+			return nil, err
+		}
+	}
+
+	return d, nil
 }
 
 // Type returns this driver type
@@ -60,34 +93,7 @@ func (d *Driver) Type() (t string) {
 // New creates a web transaction
 func (d *Driver) New(config transaction.Config) (tx transaction.Transaction, err error) {
 	txn := &Transaction{}
-	txn.proxied = d.config.Proxied
-
-	serverURL := d.config.ServerURL
-	s, ok := config.Inputs["cdp_address"]
-	if ok {
-		serverURL, ok = s.(string)
-		if !ok {
-			return nil, fmt.Errorf("driver/web: unexpected value for cdp_address: %#v", s)
-		}
-	}
-
-	if serverURL == "" {
-		return nil, fmt.Errorf("driver/web: no default server and no input cdp_server specified")
-	}
-
-	txn.server, err = url.Parse(serverURL)
-	if err != nil {
-		return nil, fmt.Errorf("driver/web: could not parse chromedp server url: %w", err)
-	}
-
-	if config.Timeout != "" {
-		txn.timeout, err = time.ParseDuration(config.Timeout)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	txn.dnsDiscovery = d.config.DNSDiscovery
+	txn.driver = d
 
 	txn.program, err = compiler.New().Compile(config.Script)
 	if err != nil {
@@ -96,4 +102,52 @@ func (d *Driver) New(config transaction.Config) (tx transaction.Transaction, err
 
 	txn.config = config
 	return txn, nil
+}
+
+// monitor the running chrome process to service transactions and recycle at every interval
+func (d *Driver) monitor() (err error) {
+
+	// start chrome process and set process group id to avoid
+	// leaving zombies upon termination
+	d.cmd = exec.Command(d.config.BinaryPath, d.config.BinaryArgs...)
+	d.cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	if err := d.cmd.Start(); err != nil {
+		return fmt.Errorf("replicant-executor: error starting chrome process: %w", err)
+	}
+
+	log.Info("chrome process created").Int("pid", int64(d.cmd.Process.Pid)).Log()
+
+	// TODO: don't panic and figure a better way to surface the errors below.
+	go func() {
+		for {
+			select {
+			case <-time.After(d.config.RecycleInterval):
+
+				log.Info("recycling chrome process").Int("pid", int64(d.cmd.Process.Pid)).Log()
+				d.m.Lock()
+
+				// stop chrome process and its children
+				err := syscall.Kill(-d.cmd.Process.Pid, syscall.SIGKILL)
+				if err != nil {
+					panic(fmt.Errorf("replicant-executor: error stopping chrome process: %w", err))
+				}
+
+				// start chrome process and set process group id to avoid
+				// leaving zombies upon termination
+				d.cmd = exec.Command(d.config.BinaryPath, d.config.BinaryArgs...)
+				d.cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+				if err := d.cmd.Start(); err != nil {
+					panic(fmt.Errorf("replicant-executor: error starting chrome process: %w", err))
+				}
+
+				d.m.Unlock()
+				log.Info("chrome process created").Int("pid", int64(d.cmd.Process.Pid)).Log()
+
+			case <-d.close:
+				return
+			}
+		}
+	}()
+
+	return nil
 }
