@@ -95,7 +95,7 @@ var config transaction.Config = transaction.Config{
 	resp = replicant.http.Do(req)
 	data = JSON.parse(resp.Body)
 	//replicant.Log(data)
-	rr = replicant.NewResponse()
+	rr = replicant.NewResult()
 	rr.Message = resp.Status
 	switch(resp.StatusCode > 200) {
 		case true:

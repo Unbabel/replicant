@@ -162,11 +162,6 @@ func (d *Driver) New(config transaction.Config) (tx transaction.Transaction, err
 	txn := &Transaction{}
 	txn.config = config
 
-	txn.timeout, err = time.ParseDuration(config.Timeout)
-	if err != nil {
-		return nil, err
-	}
-
 	txn.vm = d.vm.Copy()
 	if _, err = txn.vm.Run(config.Script); err != nil {
 		return nil, fmt.Errorf("driver/javascript: error initializing transaction script: %w", err)
@@ -260,7 +255,7 @@ replicant.Log = function (message) {
 	replicant_log(message)
 };
 
-replicant.NewResponse = function () {
+replicant.NewResult = function () {
 	return {
 		Data: "",
 		Message: "",
