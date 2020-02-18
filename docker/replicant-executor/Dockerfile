@@ -6,6 +6,13 @@ WORKDIR /src/replicant
 RUN make build
 
 FROM chromedp/headless-shell:stable
-COPY --from=builder /src/replicant/replicant-cdp /app/
+RUN apt update \
+&& apt install -y ca-certificates \
+&& apt clean; apt clean \
+&& rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /src/replicant/executor /app/
 ENTRYPOINT []
-CMD ["/app/replicant-cdp"]
+CMD ["/app/executor"]
+
+
