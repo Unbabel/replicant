@@ -6,7 +6,7 @@ GOFLAGS = -mod=vendor -ldflags "$(GOLDFLAGS)"
 
 build:
 	CGO_ENABLED=0 go build $(GOFLAGS) -o replicant cmd/replicant/*.go
-	CGO_ENABLED=0 go build $(GOFLAGS) -o replicant-cdp cmd/replicant-cdp/*.go
+	CGO_ENABLED=0 go build $(GOFLAGS) -o executor cmd/executor/*.go
 
 test:
 	CGO_ENABLED=0 go vet -mod=vendor ./...
