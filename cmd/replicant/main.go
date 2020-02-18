@@ -10,9 +10,6 @@ import (
 
 	"github.com/Unbabel/replicant/api"
 	"github.com/Unbabel/replicant/config"
-	goDriver "github.com/Unbabel/replicant/driver/go"
-	jsDriver "github.com/Unbabel/replicant/driver/javascript"
-	webDriver "github.com/Unbabel/replicant/driver/web"
 	"github.com/Unbabel/replicant/emitter/elasticsearch"
 	"github.com/Unbabel/replicant/emitter/prometheus"
 	"github.com/Unbabel/replicant/emitter/stdout"
@@ -91,13 +88,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	driverJS, err := jsDriver.New()
-	if err != nil {
-		log.Error("could not initialize javascript driver").
-			String("error", err.Error()).Log()
-		os.Exit(1)
-	}
-
 	// Init httprouter
 	router := httprouter.New()
 
@@ -114,10 +104,7 @@ func main() {
 			fmt.Sprintf("%s%s", cfg.Callbacks.Webhook.AdvertiseURL, cfg.Callbacks.Webhook.PathPrefix)).Log()
 
 	// Create a new transaction manager and service
-	m := manager.New(st,
-		driverJS,
-		goDriver.New(),
-		webDriver.New(cfg.Drivers.Web))
+	m := manager.New(st, cfg.ExecutorURL)
 
 	// Register result emitters with the manager service
 	var e manager.Emitter
@@ -155,7 +142,7 @@ func main() {
 	}
 
 	// Register all api endpoints and start the service
-	api.AddAllRoutes(cfg.APIPrefix, srv)
+	api.AddAllRoutes("/api", srv)
 	go srv.Start()
 
 	signalCh := make(chan os.Signal, 1)

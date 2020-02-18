@@ -4,17 +4,20 @@ import (
 	"flag"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 
-	"github.com/Unbabel/replicant/internal/cdpserver"
+	"github.com/Unbabel/replicant/internal/executor"
 	"github.com/Unbabel/replicant/log"
 )
 
 var (
-	address  = flag.String("address", "0.0.0.0:8080", "address to listen on")
-	interval = flag.Duration("interval", time.Second*300, "interval to recycle chrome process")
-	args     = flag.String("args", defaultArgs, "chrome command line")
-	level    = flag.String("level", "INFO", "log level")
+	address      = flag.String("address", "0.0.0.0:8080", "address to listen on")
+	serverURL    = flag.String("server-url", "http://0.0.0.0:8080", "replicant server base url")
+	advertiseURL = flag.String("advertise-url", "https://some.external.url:8080", "advertise base url for async responses")
+	interval     = flag.Duration("interval", time.Second*300, "interval to recycle chrome process")
+	args         = flag.String("args", defaultArgs, "chrome command line")
+	level        = flag.String("level", "INFO", "log level")
 
 	defaultArgs = "/headless-shell/headless-shell --headless --no-zygote --no-sandbox --disable-gpu --disable-software-rasterizer --disable-dev-shm-usage --remote-debugging-address=127.0.0.1 --remote-debugging-port=9222 --incognito --disable-shared-workers --disable-remote-fonts --disable-background-networking --disable-crash-reporter --disable-default-apps --disable-domain-reliability --disable-extensions --disable-shared-workers --disable-setuid-sandbox"
 	//--single-process --process-per-site
@@ -24,9 +27,20 @@ func main() {
 	flag.Parse()
 	log.Init(*level)
 
-	s, err := cdpserver.New(*address, *args, *interval)
+	config := executor.Config{}
+	config.ListenAddress = *address
+	config.ServerURL = *serverURL
+	config.AdvertiseURL = *advertiseURL
+
+	arguments := strings.Split(*args, " ")
+	config.Web.BinaryPath = arguments[:1][0]
+	config.Web.BinaryArgs = arguments[1:]
+	config.Web.ServerURL = "http://127.0.0.1:9222"
+	config.Web.RecycleInterval = *interval
+
+	e, err := executor.New(config)
 	if err != nil {
-		log.Error("error creating replicant-cdp server").Error("error", err).Log()
+		log.Error("error creating replicant-executor").Error("error", err).Log()
 		os.Exit(1)
 	}
 
@@ -36,14 +50,14 @@ func main() {
 	// listen for stop signals
 	go func() {
 		<-signalCh
-		if err := s.Close(); err != nil {
-			log.Error("error stopping replicant-cdp").Error("error", err).Log()
+		if err := e.Close(); err != nil {
+			log.Error("error stopping replicant-executor").Error("error", err).Log()
 			os.Exit(1)
 		}
 	}()
 
-	log.Info("starting replicant-cdp").Log()
-	if err := s.Start(); err != nil {
+	log.Info("starting replicant-executor").Log()
+	if err := e.Start(); err != nil {
 		log.Error("error running replicant-cdp").Error("error", err).Log()
 		os.Exit(1)
 	}
