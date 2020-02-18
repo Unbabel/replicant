@@ -17,7 +17,6 @@ package api
 */
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -25,8 +24,6 @@ import (
 
 	"github.com/Unbabel/replicant/server"
 	"github.com/Unbabel/replicant/transaction"
-	"github.com/Unbabel/replicant/transaction/callback"
-	"github.com/segmentio/ksuid"
 	"gopkg.in/yaml.v2"
 )
 
@@ -63,29 +60,7 @@ func RunTransaction(srv *server.Server) (handle server.Handler) {
 			return
 		}
 
-		tx, err := srv.Manager().New(config)
-		if err != nil {
-			httpError(w, err, http.StatusInternalServerError)
-			return
-		}
-
-		u := ksuid.New()
-		uuid := u.String()
-
-		ctx := context.WithValue(context.Background(), "transaction_uuid", uuid)
-
-		if config.CallBack != nil {
-			listener, err := callback.GetListener(config.CallBack.Type)
-			if err != nil {
-				httpError(w, err, http.StatusBadRequest)
-				return
-			}
-
-			ctx = context.WithValue(ctx, config.CallBack.Type, listener)
-		}
-
-		res := tx.Run(ctx)
-		res.UUID = uuid
+		res := srv.Manager().Run(config)
 		result.Data = []transaction.Result{res}
 
 		buf, err = json.Marshal(&result)
@@ -110,9 +85,7 @@ func RunTransactionByName(srv *server.Server) (handle server.Handler) {
 		var err error
 		var buf []byte
 
-		name := p.ByName("name")
-
-		res, err := srv.Manager().Run(context.Background(), name)
+		res, err := srv.Manager().RunByName(p.ByName("name"))
 		if err != nil {
 			httpError(w, err, http.StatusNotFound)
 			return

@@ -19,18 +19,20 @@ package manager
 */
 
 import (
-	"context"
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"sync"
+	"time"
 
-	"github.com/Unbabel/replicant/driver"
 	"github.com/Unbabel/replicant/internal/scheduler"
 	"github.com/Unbabel/replicant/internal/tmpl"
 	"github.com/Unbabel/replicant/internal/xz"
 	"github.com/Unbabel/replicant/log"
 	"github.com/Unbabel/replicant/store"
 	"github.com/Unbabel/replicant/transaction"
-	"github.com/Unbabel/replicant/transaction/callback"
 	"github.com/segmentio/ksuid"
 )
 
@@ -54,45 +56,35 @@ func (e EmitterFunc) Emit(result transaction.Result) { e(result) }
 // It tracks execution, scheduling and result data.
 type Manager struct {
 	mtx          sync.Mutex
+	client       *http.Client
+	executorURL  string
 	emitters     []Emitter
 	scheduler    *scheduler.Scheduler
 	transactions store.Store
-	drivers      *xz.Map
 	results      *xz.Map
 }
 
 // New creates a new manager
-func New(s store.Store, d ...driver.Driver) (manager *Manager) {
+func New(s store.Store, executorURL string) (manager *Manager) {
 	manager = &Manager{}
+	manager.client = &http.Client{}
+	manager.executorURL = executorURL
 	manager.transactions = s
-	manager.drivers = xz.NewMap()
 	manager.results = xz.NewMap()
 	manager.scheduler = scheduler.New()
 	manager.scheduler.Start()
 
-	// Register provided transaction drivers
-	for _, driver := range d {
-		manager.drivers.Store(driver.Type(), driver)
-		log.Info("registered driver").String("driver", driver.Type()).Log()
-	}
-
 	// Reconfigure previously stored transactions
 	s.Iter(func(name string, config transaction.Config) (proceed bool) {
-		tx, err := manager.New(config)
 
+		err := manager.Add(config)
 		if err != nil {
-			log.Error("error creating transaction").
+			log.Error("error loading transaction").
 				String("name", name).Error("error", err).Log()
 			return true
 		}
 
-		if err = manager.schedule(tx); err != nil {
-			log.Error("error scheduling transaction").
-				String("name", name).Error("error", err).Log()
-			return true
-		}
-
-		log.Info("added stored transaction").
+		log.Info("loaded stored transaction").
 			String("name", name).String("driver", config.Driver).
 			String("schedule", config.Schedule).Log()
 
@@ -108,81 +100,77 @@ func (m *Manager) Close() (err error) {
 	return m.transactions.Close()
 }
 
-// New creates a transaction for the given config
-func (m *Manager) New(config transaction.Config) (tx transaction.Transaction, err error) {
+// Run the given transaction
+func (m *Manager) Run(c transaction.Config) (r transaction.Result) {
+	var err error
 
-	d, ok := m.drivers.Load(config.Driver)
+	uuid := ksuid.New().String()
+	start := time.Now()
 
-	if !ok {
-		return nil, fmt.Errorf("manager: transaction driver %s not registered", config.Driver)
-	}
-
-	if config.Inputs != nil {
-		if config, err = tmpl.Parse(config); err != nil {
-			return nil, fmt.Errorf("manager: error parsing transaction template: %w", err)
+	if c.Inputs != nil {
+		if c, err = tmpl.Parse(c); err != nil {
+			return wrapErrorResult(
+				uuid, c, start, fmt.Errorf("manager: error parsing transaction template: %w", err))
 		}
 	}
 
-	if config.Timeout == "" {
-		config.Timeout = DefaultTransactionTimeout
+	buf, err := json.Marshal(&c)
+	if err != nil {
+		return wrapErrorResult(
+			uuid, c, start, fmt.Errorf("manager: error marshaling config: %w", err))
 	}
 
-	return d.(driver.Driver).New(config)
+	req, err := http.NewRequest(http.MethodPost, m.executorURL+"/"+uuid, bytes.NewReader(buf))
+	if err != nil {
+		return wrapErrorResult(
+			uuid, c, start, fmt.Errorf("manager: error creating executor request: %w", err))
+	}
+
+	res, err := m.client.Do(req)
+	if err != nil {
+		return wrapErrorResult(
+			uuid, c, start, fmt.Errorf("manager: error sending executor request: %w", err))
+	}
+	defer res.Body.Close()
+
+	buf, err = ioutil.ReadAll(res.Body)
+	if err != nil {
+		return wrapErrorResult(
+			uuid, c, start, fmt.Errorf("manager: error reading executor response: %w", err))
+	}
+
+	err = json.Unmarshal(buf, &r)
+	if err != nil {
+		return wrapErrorResult(
+			uuid, c, start, fmt.Errorf("manager: error reading executor response: %w", err))
+	}
+
+	return r
 }
 
-func (m *Manager) schedule(tx transaction.Transaction) (err error) {
-
-	var listener callback.Listener
-	config := tx.Config()
-
-	if config.CallBack != nil {
-		listener, err = callback.GetListener(config.CallBack.Type)
-		if err != nil {
-			return err
-		}
-	}
+func (m *Manager) schedule(config transaction.Config) (err error) {
 
 	return m.scheduler.AddTaskFunc(config.Name, config.Schedule,
 		func() {
 			var result transaction.Result
-			u := ksuid.New()
-			uuid := u.String()
 
 			for x := 0; x <= config.RetryCount; x++ {
-
-				ctx := context.WithValue(context.Background(), "transaction_uuid", uuid)
-				if config.CallBack != nil {
-					ctx = context.WithValue(ctx, config.CallBack.Type, listener)
-				}
-
-				result = tx.Run(ctx)
-				result.RetryCount = x
-
-				if !result.Failed {
+				result = m.Run(config)
+				if !result.Failed && result.Error != nil {
 					break
 				}
 			}
 
-			result.UUID = uuid
 			m.results.Store(config.Name, result)
-
 			for x := 0; x < len(m.emitters); x++ {
 				m.emitters[x].Emit(result)
 			}
-
 		})
 }
 
 // Add adds a replicant transaction to the manager and scheduler if the scheduling
 // spec is provided
-func (m *Manager) Add(tx transaction.Transaction) (err error) {
-
-	if tx == nil {
-		return fmt.Errorf("manager: invalid null transaction")
-	}
-
-	config := tx.Config()
-
+func (m *Manager) Add(config transaction.Config) (err error) {
 	ok, err := m.transactions.Has(config.Name)
 	if err != nil {
 		return fmt.Errorf("manager: %w", err)
@@ -193,27 +181,16 @@ func (m *Manager) Add(tx transaction.Transaction) (err error) {
 	}
 
 	if config.Schedule != "" {
-		if err = m.schedule(tx); err != nil {
+		if err = m.schedule(config); err != nil {
 			return err
 		}
 	}
 
-	m.transactions.Set(config.Name, tx.Config())
-	return nil
+	return m.transactions.Set(config.Name, config)
 }
 
-// AddFromConfig is like Add but creates the transaction from a transaction.Config
-func (m *Manager) AddFromConfig(config transaction.Config) (err error) {
-	tx, err := m.New(config)
-	if err != nil {
-		return err
-	}
-
-	return m.Add(tx)
-}
-
-// RemoveTransaction from the manager
-func (m *Manager) RemoveTransaction(name string) (err error) {
+// Delete a transaction from the manager by name
+func (m *Manager) Delete(name string) (err error) {
 
 	if err = m.transactions.Delete(name); err != nil {
 		return fmt.Errorf("manager: %w", err)
@@ -221,7 +198,6 @@ func (m *Manager) RemoveTransaction(name string) (err error) {
 
 	m.scheduler.RemoveTask(name)
 	m.results.Delete(name)
-
 	return nil
 }
 
@@ -237,30 +213,30 @@ func (m *Manager) AddEmitterFunc(emitter func(result transaction.Result)) {
 	m.AddEmitter(EmitterFunc(emitter))
 }
 
-// GetTransaction fetches a existing transaction from the manager
-func (m *Manager) GetTransaction(name string) (tx transaction.Transaction, err error) {
-	config, err := m.transactions.Get(name)
-	if err != nil {
-		return nil, fmt.Errorf("manager: %w", err)
-	}
-
-	return m.New(config)
-
-}
-
-// GetTransactionConfig fetches the config from a managed transaction
-func (m *Manager) GetTransactionConfig(name string) (config transaction.Config, err error) {
+// Get a existing transaction from the manager
+func (m *Manager) Get(name string) (config transaction.Config, err error) {
 	return m.transactions.Get(name)
 }
 
-// Run a managed transaction in a ad-hoc manner.
-func (m *Manager) Run(ctx context.Context, name string) (result transaction.Result, err error) {
-	tx, err := m.GetTransaction(name)
+// GetAll transactions from the manager
+func (m *Manager) GetAll() (configs []transaction.Config) {
+	m.transactions.Iter(func(_ string, config transaction.Config) (proceed bool) {
+		configs = append(configs, config)
+		return true
+	})
+
+	return configs
+}
+
+// RunByName a managed transaction in a ad-hoc manner.
+func (m *Manager) RunByName(name string) (result transaction.Result, err error) {
+	config, err := m.Get(name)
 	if err != nil {
 		return result, err
 	}
 
-	return tx.Run(ctx), nil
+	result = m.Run(config)
+	return result, nil
 }
 
 // GetResult fetches the latest result from a managed transaction
@@ -271,12 +247,10 @@ func (m *Manager) GetResult(name string) (result transaction.Result, err error) 
 	}
 
 	return v.(transaction.Result), nil
-
 }
 
 // GetResults fetches all latest results
 func (m *Manager) GetResults() (results []transaction.Result) {
-
 	m.results.Range(func(_ interface{}, v interface{}) (proceed bool) {
 		results = append(results, v.(transaction.Result))
 		return true
@@ -285,13 +259,13 @@ func (m *Manager) GetResults() (results []transaction.Result) {
 	return results
 }
 
-// GetTransactionsConfig fetches all transactions definitions from the manager
-func (m *Manager) GetTransactionsConfig() (configs []transaction.Config) {
-
-	m.transactions.Iter(func(_ string, config transaction.Config) (proceed bool) {
-		configs = append(configs, config)
-		return true
-	})
-
-	return configs
+func wrapErrorResult(uuid string, c transaction.Config, start time.Time, err error) (r transaction.Result) {
+	r.Name = c.Name
+	r.Driver = c.Driver
+	r.Metadata = c.Metadata
+	r.Time = start
+	r.DurationSeconds = time.Since(start).Seconds()
+	r.Failed = true
+	r.Error = err
+	return r
 }
