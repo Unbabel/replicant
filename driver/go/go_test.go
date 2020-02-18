@@ -37,7 +37,7 @@ func TestDriverTransaction(t *testing.T) {
 	defer server.Close()
 
 	var err error
-	d := New()
+	d, _ := New()
 	if err != nil {
 		t.Fatalf("error creating driver: %s", err)
 	}
