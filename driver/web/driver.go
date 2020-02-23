@@ -65,7 +65,7 @@ type Config struct {
 
 // New creates a new web driver
 func New(c Config) (d *Driver, err error) {
-	if c.ServerURL == "" || c.BinaryPath == "" {
+	if c.ServerURL == "" && c.BinaryPath == "" {
 		return nil, fmt.Errorf("driver/web: no chrome binary or server URL specified")
 	}
 
