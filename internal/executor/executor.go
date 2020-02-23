@@ -99,7 +99,7 @@ func New(c Config) (s *Server, err error) {
 			return
 		}
 
-		log.Info("handling proxied transaction request").String("name", config.Name).Log()
+		log.Debug("handling proxied transaction request").String("name", config.Name).Log()
 
 		var ctx context.Context
 		var cancel context.CancelFunc
