@@ -77,8 +77,13 @@ func New(s store.Store, executorURL string) (manager *Manager) {
 	// Reconfigure previously stored transactions
 	s.Iter(func(name string, config transaction.Config) (proceed bool) {
 
-		err := manager.Add(config)
-		if err != nil {
+		if config.Schedule == "" {
+			log.Info("stored transaction has no schedule").
+				String("name", name).String("driver", config.Driver).Log()
+			return true
+		}
+
+		if err := manager.schedule(config); err != nil {
 			log.Error("error loading transaction").
 				String("name", name).Error("error", err).Log()
 			return true
@@ -154,13 +159,15 @@ func (m *Manager) schedule(config transaction.Config) (err error) {
 		func() {
 			var result transaction.Result
 
-			for x := 0; x <= config.RetryCount; x++ {
+			var x int
+			for ; x <= config.RetryCount; x++ {
 				result = m.Run(config)
 				if !result.Failed && result.Error != nil {
 					break
 				}
 			}
 
+			result.RetryCount = x
 			m.results.Store(config.Name, result)
 			for x := 0; x < len(m.emitters); x++ {
 				m.emitters[x].Emit(result)
