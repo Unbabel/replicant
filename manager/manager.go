@@ -84,7 +84,7 @@ func New(s store.Store, executorURL string) (manager *Manager) {
 		}
 
 		if err := manager.schedule(config); err != nil {
-			log.Error("error loading transaction").
+			log.Error("error scheduling transaction").
 				String("name", name).Error("error", err).Log()
 			return true
 		}
