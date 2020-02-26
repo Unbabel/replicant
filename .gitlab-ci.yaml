@@ -23,7 +23,7 @@ test:
   stage: test
   image: $BUILD_IMAGE
   only:
-    - merge_requests
+    - external_pull_requests
     - master
   script:
     - make test
