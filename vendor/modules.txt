@@ -97,6 +97,8 @@ github.com/golang/snappy
 github.com/gorilla/css/scanner
 # github.com/gorilla/websocket v1.4.1
 github.com/gorilla/websocket
+# github.com/inconshreveable/mousetrap v1.0.0
+github.com/inconshreveable/mousetrap
 # github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af
 github.com/jmespath/go-jmespath
 # github.com/julienschmidt/httprouter v1.3.0
@@ -196,6 +198,10 @@ github.com/rs/zerolog/internal/cbor
 github.com/rs/zerolog/internal/json
 # github.com/segmentio/ksuid v1.0.2
 github.com/segmentio/ksuid
+# github.com/spf13/cobra v0.0.6
+github.com/spf13/cobra
+# github.com/spf13/pflag v1.0.3
+github.com/spf13/pflag
 # github.com/syndtr/goleveldb v1.0.0
 github.com/syndtr/goleveldb/leveldb
 github.com/syndtr/goleveldb/leveldb/cache
