@@ -68,7 +68,7 @@ type Manager struct {
 func New(s store.Store, executorURL string) (manager *Manager) {
 	manager = &Manager{}
 	manager.client = &http.Client{}
-	manager.executorURL = executorURL
+	manager.executorURL = executorURL + "/api/v1/run/"
 	manager.transactions = s
 	manager.results = xz.NewMap()
 	manager.scheduler = scheduler.New()
@@ -125,7 +125,7 @@ func (m *Manager) Run(c transaction.Config) (r transaction.Result) {
 			uuid, c, start, fmt.Errorf("manager: error marshaling config: %w", err))
 	}
 
-	req, err := http.NewRequest(http.MethodPost, m.executorURL+"/"+uuid, bytes.NewReader(buf))
+	req, err := http.NewRequest(http.MethodPost, m.executorURL+uuid, bytes.NewReader(buf))
 	if err != nil {
 		return wrapErrorResult(
 			uuid, c, start, fmt.Errorf("manager: error creating executor request: %w", err))
