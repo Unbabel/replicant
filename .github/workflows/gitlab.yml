@@ -1,2 +1,3 @@
 name: Trigger GitLab CI
 uses: appleboy/gitlab-ci-action@0.0.1
+on: push
