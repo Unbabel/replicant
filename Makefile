@@ -5,8 +5,7 @@ GOLDFLAGS += -X main.BuildTime=$(shell date -u '+%Y-%m-%dT%H:%M:%SZ')
 GOFLAGS = -mod=vendor -ldflags "$(GOLDFLAGS)"
 
 build:
-	CGO_ENABLED=0 go build $(GOFLAGS) -o replicant cmd/replicant/*.go
-	CGO_ENABLED=0 go build $(GOFLAGS) -o executor cmd/executor/*.go
+	CGO_ENABLED=0 go build $(GOFLAGS) -o replicant main.go
 
 test:
 	CGO_ENABLED=0 go vet -mod=vendor ./...

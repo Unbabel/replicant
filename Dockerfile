@@ -11,8 +11,6 @@ RUN apt update \
 && apt clean; apt clean \
 && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /src/replicant/executor /app/
+COPY --from=builder /src/replicant/replicant /app/
 ENTRYPOINT []
-CMD ["/app/executor"]
-
-
+CMD ["/app/replicant"]
