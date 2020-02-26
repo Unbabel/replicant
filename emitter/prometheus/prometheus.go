@@ -30,6 +30,24 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+// Config options
+type Config struct {
+	Path              string              `json:"path" yaml:"path"`
+	Labels            []string            `json:"labels" yaml:"labels"`
+	Gauges            bool                `json:"gauges" yaml:"gauges"`
+	Summaries         bool                `json:"summaries" yaml:"summaries"`
+	SummaryObjectives map[float64]float64 `json:"summary_objectives" yaml:"summary_objectives"`
+}
+
+// DefaultConfig for prometheus config
+var DefaultConfig = Config{
+	Path:              "/metrics",
+	Gauges:            true,
+	Summaries:         true,
+	Labels:            []string{"transaction", "application", "environment", "component"},
+	SummaryObjectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+}
+
 // Emitter for prometheus
 type Emitter struct {
 	config         Config
@@ -41,16 +59,7 @@ type Emitter struct {
 	latencySummary *prometheus.SummaryVec
 }
 
-// Config options
-type Config struct {
-	Path              string              `json:"path" yaml:"path"`
-	Labels            []string            `json:"labels" yaml:"labels"`
-	Gauges            bool                `json:"gauges" yaml:"gauges"`
-	Summaries         bool                `json:"summaries" yaml:"summaries"`
-	SummaryObjectives map[float64]float64 `json:"summary_objectives" yaml:"summary_objectives"`
-}
-
-// Close and flush pending data
+// Close emitter
 func (e *Emitter) Close() {}
 
 // Emit results
