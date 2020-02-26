@@ -3,7 +3,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/Unbabel/replicant?style=flat-square)](https://goreportcard.com/report/github.com/Unbabel/replicant)
 [![GoDoc](https://img.shields.io/badge/api-reference-blue.svg?style=flat-square)](https://godoc.org/github.com/Unbabel/replicant)
 [![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/unbabel/replicant?style=flat-square)](https://hub.docker.com/r/unbabel/replicant)
-[![pipeline status](https://gitlab.com/Unbabel/sre-team/replicant/badges/master/pipeline.svg)](https://gitlab.com/Unbabel/sre-team/replicant/-/commits/master)
+[![pipeline status](https://gitlab.com/Unbabel/sre-team/replicant/badges/master/pipeline.svg)](https://gitlab.com/Unbabel/sre-team/replicant/-/commits/master)<br/>
 
 
 Replicant is a synthetic testing service named after the bioengineered androids from Blade Runner. (all synthetics came from Blade Runner :)
