@@ -1,0 +1,44 @@
+stages:
+  - test   # run the tests for this codebase
+  - build  # build the container image and push it to the container registry
+  - deploy # deploy the built image on Kubernetes
+
+variables:
+  # define the base images to use in the stages
+  REGISTRY_BASE_IMAGES: sre/base-images
+  BASE_IMAGE_TAG: go-1.13-v0.0.2
+  BUILD_IMAGE: $REGISTRY_URL/$REGISTRY_BASE_IMAGES:$BASE_IMAGE_TAG
+
+  # the replicant REGISTRY repository URLs
+  REPLICANT_REGISTRY_URL: $REGISTRY_URL/sre/replicant/master
+
+
+# we should run the tests on all merge requests and master
+test:
+  stage: test
+  image: $BUILD_IMAGE
+  only:
+    - external_pull_requests
+    - master
+    - push
+  script:
+    - make test
+
+build_and_push_provisioner:
+  stage: build
+  image: docker
+  only:
+    - tags
+  before_script:
+    - apk update
+    - apk add py2-pip git
+    - pip install awscli
+    - $REGISTRY_LOGIN 
+    - git pull origin master --tags --force
+    - export GIT_TAG=`git tag --sort=-version:refname | egrep -m 1 "v[0-9]+\.[0-9]+\.[0-9]+"`
+  script:
+    - docker build -f docker/replicant/Dockerfile . -t $REPLICANT_REGISTRY_URL:latest -t $REPLICANT_REGISTRY_URL:$CI_COMMIT_SHA -t $REPLICANT_REGISTRY_URL:$GIT_TAG
+    - docker push $REPLICANT_REGISTRY_URL:latest
+    - docker push $REPLICANT_REGISTRY_URL:$CI_COMMIT_SHA
+    - docker push $REPLICANT_REGISTRY_URL:$GIT_TAG
+

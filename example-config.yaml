@@ -1,7 +1,7 @@
 debug: false                                  # Register server profiling endpoints
 log_level: INFO                               # Log level
 api_prefix: /api                              # API prefix for the api endpoints
-store_uri: "leveldb:/data"                    # Store connection string
+store_uri: "s3://AKIAXL6UM6PK6GGRIKEN:bsbvn7o5pTgUp1CC9w3tUbgFt6UidP3EU9NQssEm@thisismyawesomebucket/testy?region=eu-west-1"
 server:
   listen_address: 0.0.0.0:8080                # Address to listen on
   write_timeout: 5m                        # API write timeout
