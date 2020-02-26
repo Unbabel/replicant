@@ -25,6 +25,7 @@ test:
   only:
     - external_pull_requests
     - master
+    - push
   script:
     - make test
 
