@@ -34,11 +34,14 @@ func New(c Config) (e *Executor, err error) {
 	e.drivers = xz.NewMap()
 
 	var drv driver.Driver
-	drv, err = web.New(c.Web)
-	if err != nil {
-		return nil, err
+
+	if c.Web.BinaryPath != "" || c.Web.ServerURL != "" {
+		drv, err = web.New(c.Web)
+		if err != nil {
+			return nil, err
+		}
+		e.drivers.Store(drv.Type(), drv)
 	}
-	e.drivers.Store(drv.Type(), drv)
 
 	drv, err = javascript.New()
 	if err != nil {
