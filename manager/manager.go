@@ -158,16 +158,16 @@ func (m *Manager) schedule(config transaction.Config) (err error) {
 	return m.scheduler.AddTaskFunc(config.Name, config.Schedule,
 		func() {
 			var result transaction.Result
-
 			var x int
+
 			for ; x <= config.RetryCount; x++ {
 				result = m.Run(config)
 				if !result.Failed && result.Error != nil {
 					break
 				}
 			}
-
 			result.RetryCount = x
+
 			m.results.Store(config.Name, result)
 			for x := 0; x < len(m.emitters); x++ {
 				m.emitters[x].Emit(result)
@@ -220,7 +220,7 @@ func (m *Manager) AddEmitterFunc(emitter func(result transaction.Result)) {
 	m.AddEmitter(EmitterFunc(emitter))
 }
 
-// Get a existing transaction from the manager
+// Get a existing transaction from the manager by name
 func (m *Manager) Get(name string) (config transaction.Config, err error) {
 	return m.transactions.Get(name)
 }
