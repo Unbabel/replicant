@@ -11,6 +11,7 @@ func init() {
 	Root.PersistentFlags().String("log-level", "INFO", "log level")
 	Root.AddCommand(Server)
 	Root.AddCommand(Executor)
+	Root.AddCommand(Run)
 }
 
 // Root command for replicant
