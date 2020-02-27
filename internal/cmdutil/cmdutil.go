@@ -13,7 +13,7 @@ import (
 func GetFlagString(cmd *cobra.Command, name string) (v string) {
 	v, err := cmd.Flags().GetString(name)
 	if err != nil {
-		fmt.Printf("error accessing flag %s for command %s: %s", name, cmd.Name, err)
+		fmt.Printf("error accessing flag %s for command %s: %s", name, cmd.Name(), err)
 		os.Exit(1)
 	}
 
@@ -24,7 +24,7 @@ func GetFlagString(cmd *cobra.Command, name string) (v string) {
 func GetFlagBool(cmd *cobra.Command, name string) (v bool) {
 	v, err := cmd.Flags().GetBool(name)
 	if err != nil {
-		fmt.Printf("error accessing flag %s for command %s: %s", name, cmd.Name, err)
+		fmt.Printf("error accessing flag %s for command %s: %s", name, cmd.Name(), err)
 		os.Exit(1)
 	}
 
@@ -35,7 +35,7 @@ func GetFlagBool(cmd *cobra.Command, name string) (v bool) {
 func GetFlagDuration(cmd *cobra.Command, name string) (v time.Duration) {
 	v, err := cmd.Flags().GetDuration(name)
 	if err != nil {
-		fmt.Printf("error accessing flag %s for command %s: %s", name, cmd.Name, err)
+		fmt.Printf("error accessing flag %s for command %s: %s", name, cmd.Name(), err)
 		os.Exit(1)
 	}
 
