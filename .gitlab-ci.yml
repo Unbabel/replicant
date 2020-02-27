@@ -23,7 +23,22 @@ test:
   script:
     - make test
 
-build_and_push_provisioner:
+build_and_push_pr:
+  stage: build
+  image: docker
+  only:
+    - external_pull_requests
+  before_script:
+    - apk update
+    - apk add py2-pip git
+    - pip install awscli
+    - $REGISTRY_LOGIN  &>/dev/null
+    - git pull origin master --tags --force
+  script:
+    - docker build -f Dockerfile . -t $REPLICANT_REGISTRY_URL:$CI_COMMIT_SHA
+    - docker push $REPLICANT_REGISTRY_URL:$CI_COMMIT_SHA
+
+push_tag_registry:
   stage: build
   image: docker
   only:
@@ -32,7 +47,7 @@ build_and_push_provisioner:
     - apk update
     - apk add py2-pip git
     - pip install awscli
-    - $REGISTRY_LOGIN 
+    - $REGISTRY_LOGIN &>/dev/null 
     - git pull origin master --tags --force
     - export GIT_TAG=`git tag --sort=-version:refname | egrep -m 1 "v[0-9]+\.[0-9]+\.[0-9]+"`
   script:
