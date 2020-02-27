@@ -33,7 +33,6 @@ build_and_push_pr:
     - apk add py2-pip git
     - pip install awscli
     - $REGISTRY_LOGIN  &>/dev/null
-    - git pull origin master --tags --force
   script:
     - docker build -f Dockerfile . -t $REPLICANT_REGISTRY_URL:$CI_COMMIT_SHA
     - docker push $REPLICANT_REGISTRY_URL:$CI_COMMIT_SHA
