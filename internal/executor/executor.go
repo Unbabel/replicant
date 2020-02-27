@@ -104,11 +104,11 @@ func (e *Executor) Run(uuid string, c transaction.Config) (r transaction.Result,
 	}
 
 	start := time.Now()
-	result := tx.Run(ctx)
-	result.UUID = uuid
-	result.Time = start
-	result.DurationSeconds = time.Since(result.Time).Seconds()
-	result.Metadata = c.Metadata
+	r = tx.Run(ctx)
+	r.UUID = uuid
+	r.Time = start
+	r.DurationSeconds = time.Since(r.Time).Seconds()
+	r.Metadata = c.Metadata
 
 	return r, nil
 }
