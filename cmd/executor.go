@@ -20,14 +20,14 @@ import (
 )
 
 func init() {
-	Executor.Flags().String("listen-address", "0.0.0.0:8081", "Address to for server to listen on")
-	Executor.Flags().String("server-url", "http://127.0.0.1:8080", "Address to for server to listen on")
+	Executor.Flags().String("listen-address", "0.0.0.0:8081", "Address to for executor to listen on")
+	Executor.Flags().String("server-url", "http://127.0.0.1:8080", "Replicant server url")
 	Executor.Flags().Duration("max-runtime", time.Minute*5, "Maximum individual test runtime")
 	Executor.Flags().Bool("debug", false, "Expose a debug profile endpoint at /debug/pprof")
 	Executor.Flags().String("webhook-advertise-url", "http://localhost:8080", "URL to advertise when receiving webhook based async responses")
-	Executor.Flags().String("chrome-remote-url", "", "Chrome remote debugging protocol server. For using remote chrome process instead of a local managed process")
+	Executor.Flags().String("chrome-remote-url", "http://127.0.0.1:9222", "Chrome remote debugging protocol server. For using remote chrome process instead of a local managed process")
 	Executor.Flags().Bool("chrome-enable-local", true, "Enable running a local chrome worker process for web transactions")
-	Executor.Flags().String("chrome-local-command", "/headless-shell/headless-shell --headless --no-zygote --no-sandbox --disable-gpu --disable-software-rasterizer --disable-dev-shm-usage --remote-debugging-address=127.0.0.1 --remote-debugging-port=9222 --incognito --disable-shared-workers --disable-remote-fonts --disable-background-networking --disable-crash-reporter --disable-default-apps --disable-domain-reliability --disable-extensions --disable-shared-workers --disable-setuid-sandbox", "Chrome arguments")
+	Executor.Flags().String("chrome-local-command", "/headless-shell/headless-shell --headless --no-zygote --no-sandbox --disable-gpu --disable-software-rasterizer --disable-dev-shm-usage --remote-debugging-address=127.0.0.1 --remote-debugging-port=9222 --incognito --disable-shared-workers --disable-remote-fonts --disable-background-networking --disable-crash-reporter --disable-default-apps --disable-domain-reliability --disable-extensions --disable-shared-workers --disable-setuid-sandbox", "Command for launching chrome with arguments included")
 	Executor.Flags().Duration("chrome-recycle-interval", time.Minute*5, "Chrome recycle interval for locally managed chrome process")
 }
 
@@ -42,15 +42,13 @@ var Executor = &cobra.Command{
 		config.AdvertiseURL = cmdutil.GetFlagString(cmd, "webhook-advertise-url")
 
 		// Setup chrome support for web applications
-		switch cmdutil.GetFlagBool(cmd, "chrome-enable-local") {
-		case true:
+		config.Web.ServerURL = cmdutil.GetFlagString(cmd, "chrome-remote-url")
+
+		if cmdutil.GetFlagBool(cmd, "chrome-enable-local") {
 			arguments := strings.Split(cmdutil.GetFlagString(cmd, "chrome-local-command"), " ")
 			config.Web.BinaryPath = arguments[:1][0]
 			config.Web.BinaryArgs = arguments[1:]
-			config.Web.ServerURL = "http://127.0.0.1:9222"
 			config.Web.RecycleInterval = cmdutil.GetFlagDuration(cmd, "chrome-recycle-interval")
-		case false:
-			config.Web.ServerURL = cmdutil.GetFlagString(cmd, "chrome-remote-url")
 		}
 
 		server := &http.Server{}
