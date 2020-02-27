@@ -10,7 +10,7 @@ variables:
   BUILD_IMAGE: $REGISTRY_URL/$REGISTRY_BASE_IMAGES:$BASE_IMAGE_TAG
 
   # the replicant REGISTRY repository URLs
-  REPLICANT_REGISTRY_URL: $REGISTRY_URL/sre/replicant/master
+  REPLICANT_REGISTRY_URL: $REGISTRY_URL/sre/replicant
 
 
 # we should run the tests on all merge requests and master
