@@ -28,18 +28,24 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+// Config options
+type Config struct {
+	AdvertiseURL string `json:"advertise_url" yaml:"advertise_url"`
+	PathPrefix   string `json:"path_prefix" yaml:"path_prefix"`
+}
+
+// DefaultConfig for webhook
+var DefaultConfig = Config{
+	AdvertiseURL: "http://0.0.0.0:8080",
+	PathPrefix:   "/callback",
+}
+
 // Listener implements a replicant callback.Listener for http webhooks
 type Listener struct {
 	prefix  string
 	url     string
 	router  *httprouter.Router
 	handles *xz.Map
-}
-
-// Config options
-type Config struct {
-	AdvertiseURL string `json:"advertise_url" yaml:"advertise_url"`
-	PathPrefix   string `json:"path_prefix" yaml:"path_prefix"`
 }
 
 // New creates a new webhook listener for async callback based responses to replicant transactions

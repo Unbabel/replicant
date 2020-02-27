@@ -31,9 +31,8 @@ const maxTimeout = 10 * time.Minute
 
 // Transaction is a pre-compiled replicant transaction for javascript based transactions
 type Transaction struct {
-	vm      *otto.Otto
-	config  transaction.Config
-	timeout time.Duration
+	vm     *otto.Otto
+	config transaction.Config
 }
 
 // Config returns the transaction config
@@ -48,12 +47,6 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 	if !ok {
 		result.Failed = true
 		result.Error = fmt.Errorf("driver/javascript: transaction_uuid not found in context")
-	}
-
-	if t.timeout > 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, t.timeout)
-		defer cancel()
 	}
 
 	// If dealing with async responses for this transaction, we must first get a Listener and Handle
@@ -77,7 +70,6 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 
 	result.Name = t.config.Name
 	result.Driver = "javascript"
-	result.Time = time.Now()
 	result.Metadata = t.config.Metadata
 
 	// copy the vm to avoid problems such as cancellation and GC
@@ -222,9 +214,8 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 			panic("stop")
 		}
 		result.Failed = true
-		result.Error = fmt.Errorf("driver/javascript: timed out running transaction after: %.2f seconds", t.timeout.Seconds())
+		result.Error = fmt.Errorf("driver/javascript: timed out running transaction")
 	}
 
-	result.DurationSeconds = time.Since(result.Time).Seconds()
 	return result
 }

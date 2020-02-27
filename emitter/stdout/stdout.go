@@ -29,6 +29,9 @@ type Config struct {
 	Pretty bool `json:"pretty" yaml:"pretty"`
 }
 
+// DefaultConfig for stdout
+var DefaultConfig = Config{Pretty: false}
+
 // Emitter stdout
 type Emitter struct {
 	config Config

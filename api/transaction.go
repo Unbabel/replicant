@@ -61,7 +61,7 @@ func AddTransaction(srv *server.Server) (handle server.Handler) {
 			return
 		}
 
-		err = srv.Manager().AddFromConfig(config)
+		err = srv.Manager().Add(config)
 		if err != nil {
 			httpError(w, err, http.StatusBadRequest)
 			return
@@ -89,7 +89,7 @@ func GetTransaction(srv *server.Server) (handle server.Handler) {
 		var result Result
 
 		name := p.ByName("name")
-		config, err := srv.Manager().GetTransactionConfig(name)
+		config, err := srv.Manager().Get(name)
 
 		if err != nil {
 			httpError(w, err, http.StatusNotFound)
@@ -115,7 +115,7 @@ func GetTransactions(srv *server.Server) (handle server.Handler) {
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 
 		var result Result
-		result.Data = srv.Manager().GetTransactionsConfig()
+		result.Data = srv.Manager().GetAll()
 		buf, err := json.Marshal(&result)
 		if err != nil {
 			httpError(w, fmt.Errorf("error serializing results: %w", err), http.StatusInternalServerError)
@@ -134,9 +134,7 @@ func RemoveTransaction(srv *server.Server) (handle server.Handler) {
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 
 		var result Result
-
-		name := p.ByName("name")
-		err := srv.Manager().RemoveTransaction(name)
+		err := srv.Manager().Delete(p.ByName("name"))
 
 		if err != nil {
 			httpError(w, err, http.StatusNotFound)

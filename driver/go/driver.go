@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Unbabel/replicant/driver"
 	"github.com/Unbabel/replicant/transaction"
 	"github.com/containous/yaegi/interp"
 	"github.com/containous/yaegi/stdlib"
@@ -31,8 +32,8 @@ import (
 type Driver struct{}
 
 // New creates a new Go driver
-func New() (d *Driver) {
-	return &Driver{}
+func New() (d driver.Driver, err error) {
+	return &Driver{}, nil
 }
 
 // Type returns this driver type

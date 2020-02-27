@@ -48,12 +48,6 @@ func (t *Transaction) Config() (config transaction.Config) {
 
 // Run executes the web transaction
 func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
-	if t.timeout > 0 {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, t.timeout)
-		defer cancel()
-	}
-
 	result.Name = t.config.Name
 	result.Driver = "go"
 	result.Metadata = t.config.Metadata
@@ -79,10 +73,7 @@ func (t *Transaction) Run(ctx context.Context) (result transaction.Result) {
 		ctx = context.WithValue(ctx, "callback_address", handle.Address)
 	}
 
-	result.Time = time.Now()
 	m, d, err := t.transaction(ctx)
-	result.DurationSeconds = time.Since(result.Time).Seconds()
-
 	if err != nil {
 		result.Error = fmt.Errorf("driver/go: error running transaction: %w", err)
 		result.Message = m
