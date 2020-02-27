@@ -28,7 +28,7 @@ import (
 	"github.com/Unbabel/replicant/transaction/callback"
 )
 
-// CallbackRequest handler
+// CallbackRequest services callback requests for transactions being run from executors
 func CallbackRequest(srv *server.Server) (handle server.Handler) {
 	return func(w http.ResponseWriter, r *http.Request, p server.Params) {
 		defer r.Body.Close()
