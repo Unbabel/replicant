@@ -54,7 +54,7 @@ type Config struct {
 	BinaryPath string `json:"binary_path" yaml:"binary_path"`
 
 	// Arguments for launching chrome
-	BinaryArgs []string `json:"binary_path" yaml:"binary_path"`
+	BinaryArgs []string `json:"binary_args" yaml:"binary_args"`
 
 	// Interval for recycling chrome processes
 	RecycleInterval time.Duration
