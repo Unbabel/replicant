@@ -3,11 +3,12 @@ package executor
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/Unbabel/replicant/driver"
-	gd "github.com/Unbabel/replicant/driver/go"
+	godriver "github.com/Unbabel/replicant/driver/go"
 	"github.com/Unbabel/replicant/driver/javascript"
 	"github.com/Unbabel/replicant/driver/web"
 	"github.com/Unbabel/replicant/internal/xz"
@@ -49,7 +50,7 @@ func New(c Config) (e *Executor, err error) {
 	}
 	e.drivers.Store(drv.Type(), drv)
 
-	drv, err = gd.New()
+	drv, err = godriver.New()
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +61,11 @@ func New(c Config) (e *Executor, err error) {
 
 // Run the given transaction
 func (e *Executor) Run(uuid string, c transaction.Config) (r transaction.Result, err error) {
-	d, _ := e.drivers.Load(c.Driver)
+	d, ok := e.drivers.Load(c.Driver)
+	if !ok {
+		return r, fmt.Errorf("replicant-executor: driver %s not found", c.Driver)
+	}
+
 	drv := d.(driver.Driver)
 
 	var ctx context.Context
