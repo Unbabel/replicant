@@ -29,7 +29,7 @@ func init() {
 	Server.Flags().String("listen-address", "0.0.0.0:8080", "Address to for server to listen on")
 	Server.Flags().Duration("max-runtime", time.Minute*5, "Maximum individual test runtime")
 	Server.Flags().String("store-uri", "memory:-", "store uri, currently supported: memory:-, leveldb:/<path>, s3://<user>:<password>@<bucket>/path?region=<region>")
-	Server.Flags().String("executor-url", "http://localhost:8081", "replicant executor url")
+	Server.Flags().String("executor-url", "http://localhost:8081", "Replicant executor url")
 	Server.Flags().Bool("emit-stdout", true, "Emit json structured results to standard output")
 	Server.Flags().Bool("emit-stdout-pretty", false, "Pretty print stdout json output")
 	Server.Flags().Bool("emit-prometheus", true, "Expose a prometheus exporter for emitting result data at /metrics")
@@ -61,7 +61,7 @@ var Server = &cobra.Command{
 
 		emitStdout := cmdutil.GetFlagBool(cmd, "emit-stdout")
 		if emitStdout {
-			m.AddEmitter(stdout.New(stdout.Config{cmdutil.GetFlagBool(cmd, "emit-stdout-pretty")}))
+			m.AddEmitter(stdout.New(stdout.Config{Pretty: cmdutil.GetFlagBool(cmd, "emit-stdout-pretty")}))
 		}
 
 		emitPrometheus := cmdutil.GetFlagBool(cmd, "emit-prometheus")
