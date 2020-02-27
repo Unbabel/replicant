@@ -19,8 +19,10 @@ package web
 
 import (
 	"fmt"
+	"net"
 	"net/url"
 	"os/exec"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -107,12 +109,18 @@ func (d *Driver) New(config transaction.Config) (tx transaction.Transaction, err
 // monitor the running chrome process to service transactions and recycle at every interval
 func (d *Driver) monitor() (err error) {
 
+	address := strings.Replace(d.config.ServerURL, "http://", "", 1)
+
 	// start chrome process and set process group id to avoid
 	// leaving zombies upon termination
 	d.cmd = exec.Command(d.config.BinaryPath, d.config.BinaryArgs...)
 	d.cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	if err := d.cmd.Start(); err != nil {
 		return fmt.Errorf("replicant-executor: error starting chrome process: %w", err)
+	}
+
+	if err := waitForConn(address, 5, time.Second); err != nil {
+		panic(fmt.Errorf("replicant-executor: %w", err))
 	}
 
 	log.Info("chrome process created").Int("pid", int64(d.cmd.Process.Pid)).Log()
@@ -140,6 +148,10 @@ func (d *Driver) monitor() (err error) {
 					panic(fmt.Errorf("replicant-executor: error starting chrome process: %w", err))
 				}
 
+				if err := waitForConn(address, 5, time.Second); err != nil {
+					panic(fmt.Errorf("replicant-executor: %w", err))
+				}
+
 				d.m.Unlock()
 				log.Info("chrome process created").Int("pid", int64(d.cmd.Process.Pid)).Log()
 
@@ -150,4 +162,26 @@ func (d *Driver) monitor() (err error) {
 	}()
 
 	return nil
+}
+
+// waitForConn waits for a successful TCP connection to the specified address
+// for the given number of retries beetween the given interval.
+func waitForConn(address string, retries int, interval time.Duration) (err error) {
+	for x := 0; x < retries; x++ {
+		log.Debug("replicant-executor: checking managed chrome process availability").Log()
+
+		var conn net.Conn
+		conn, err = net.Dial("tcp", address)
+		if err == nil {
+			log.Debug("replicant-executor: successfully connected to chrome process").Log()
+			conn.Close()
+			return nil
+		}
+
+		if x < retries-1 {
+			<-time.After(interval)
+		}
+	}
+
+	return fmt.Errorf("error connecting to managed chrome process: %w", err)
 }
