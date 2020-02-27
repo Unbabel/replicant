@@ -1,4 +1,4 @@
-FROM golang:alpine AS builder
+FROM golang:1.13-alpine AS builder
 RUN apk --no-cache add git make
 COPY . /src/replicant
 WORKDIR /src/replicant
