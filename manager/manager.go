@@ -158,15 +158,19 @@ func (m *Manager) schedule(config transaction.Config) (err error) {
 	return m.scheduler.AddTaskFunc(config.Name, config.Schedule,
 		func() {
 			var result transaction.Result
-			var x int
 
-			for ; x <= config.RetryCount; x++ {
+			for x := 0; x <= config.RetryCount; x++ {
 				result = m.Run(config)
-				if !result.Failed && result.Error != nil {
+				result.RetryCount = x
+				if !result.Failed && result.Error == nil {
 					break
 				}
+
+				log.Debug("transaction failed").String("name", result.Name).
+					Error("error", result.Error).String("data", result.Data).
+					String("message", result.Message).String("uuid", result.UUID).
+					Int("retry", int64(result.RetryCount)).Log()
 			}
-			result.RetryCount = x
 
 			m.results.Store(config.Name, result)
 			for x := 0; x < len(m.emitters); x++ {
