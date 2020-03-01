@@ -3,8 +3,6 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/Unbabel/replicant?style=flat-square)](https://goreportcard.com/report/github.com/Unbabel/replicant)
 [![GoDoc](https://img.shields.io/badge/api-reference-blue.svg?style=flat-square)](https://godoc.org/github.com/Unbabel/replicant)
 [![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/unbabel/replicant?style=flat-square)](https://hub.docker.com/r/unbabel/replicant)
-[![pipeline status](https://gitlab.com/Unbabel/sre-team/replicant/badges/master/pipeline.svg)](https://gitlab.com/Unbabel/sre-team/replicant/-/commits/master)<br/>
-
 
 Replicant is a synthetic testing service named after the bioengineered androids from Blade Runner. (all synthetics came from Blade Runner :)
 
@@ -24,15 +22,13 @@ It allows web application testing using chromedp, and api application testing us
 
 ## Running the replicant server locally with docker
 
-Using [example config](https://github.com/Unbabel/replicant/blob/master/example-config.yaml) from the project root dir.
-
 ```bash
 docker stack deploy -c $PWD/docker-compose.yaml replicant
 ```
 
-This will deploy the replicant server and 2 chrome-headless nodes for web tests, persisting data under /data.
+This will deploy the replicant server and 2 replicant executor nodes for web tests, persisting data under /data.
 
-### Web application testing (local development)
+### Web application testing
 
 Web application testing support is based on the FQL (Ferret Query Language), [documentation](https://github.com/MontFerret/ferret).
 
@@ -98,14 +94,16 @@ script: |
 }
 ```
 
-### API testing (local development)
+### API testing
 
 ##### Using the javascript driver
 The following API is exposed by the javascript driver in order to perform HTTP calls and logging:
 * `replicant.Log(string)` log messages from the javascript test on the replicant server log.
-* `replicant.NewResponse()` create a new response object to be returned as a result of the test, which should be modified accordingly to reflect the test result. The response must be returned as a serialized JSON object by calling its bounded method `Response.JSON`, E.g. `return response.JSON()`.
 
-Response type attributes:
+
+* `replicant.NewResult()` create a new response object to be returned as a result of the test, which should be modified accordingly to reflect the test result. The response must be returned as a serialized JSON object by calling its bounded method `Response.JSON`, E.g. `return response.JSON()`.
+
+Result type attributes:
 ```js
 {
 		Data: "",
@@ -113,6 +111,7 @@ Response type attributes:
 		Failed: false,
 }
 ```
+
 * `replicant.http.NewRequest()` creates a new HTTP request object for performing HTTP calls.
 
 HttpRequest attributes:
