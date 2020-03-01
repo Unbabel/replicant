@@ -3,21 +3,15 @@ version: "3.7"
 services:
   server:
     image: docker.io/unbabel/replicant:latest
+    command: /app/replicant server --listen-address 0.0.0.0:8080 --executor-url http://executor:8080
     ports:
       - "8080:8080"
-    volumes:
-      - data:/data
-    configs:
-      - config.yaml
-    command: /app/replicant -config /config.yaml
-  cdp:
-    image: docker.io/unbabel/replicant:replicant-cdp-latest
+  executor:
+    image: docker.io/unbabel/replicant:latest
+    command: /app/replicant executor --listen-address 0.0.0.0:8080  --chrome-enable-local --server-url http://server:8080
     deploy:
       mode: replicated
       replicas: 2
 volumes:
   data: null
-configs:
-  config.yaml:
-    file: ./example-config.yaml
 
