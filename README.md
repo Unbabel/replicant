@@ -12,21 +12,46 @@ It allows web application testing using chromedp, and api application testing us
 
 ***Under heavy development and API changes are expected. Please file an issue if anything breaks.***
 
-## Requirements
+## Runing replicant
 
-* Go 1.13
-* External URL for API tests that require webhook based callbacks
-* Chrome with remote debugging (CDP) either in headless mode or in foreground (useful for testing)
+The replicant binary packs all functionality needed to run the server, executor and run local execution of tests for development or CI/CD purposes.
 
-## Examples
+### Locally for development purposes
 
-## Running the replicant server locally with docker
+```bash
+/path/to/replicant run --file api-test.yaml
+```
+
+If running locally from with the replicant binary a local chrome web browser with the development protocol can be specified:
+
+```bash
+/path/to/replicant run --chrome-remote-url http://127.0.0.1:9222  --file web-test.yaml
+```
+
+To have the local chrome browser started with the developer protocol enabled:
+
+```bash
+/path/to/chrome --remote-debugging-port=9222
+```
+
+### Configuration options
+
+Please see:
+
+```bash
+/path/to/replicant --help
+```
+
+### Replicant server and executor locally with docker
+
+The unbabel/replicant docker image packs everything needed to run and manage tests for both web apps and APIs.
+See the example `docker-compose.yaml` for more information.
 
 ```bash
 docker stack deploy -c $PWD/docker-compose.yaml replicant
 ```
 
-This will deploy the replicant server and 2 replicant executor nodes for web tests, persisting data under /data.
+This will deploy the replicant server and 2 replicant executor nodes for web tests.
 
 ### Web application testing
 
