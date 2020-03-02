@@ -16,7 +16,7 @@ It allows web application testing using chromedp, and api application testing us
 
 The replicant binary packs all functionality needed to run the server, executor and run local execution of tests for development or CI/CD purposes.
 
-### Locally for development purposes
+### Locally for test development purposes
 
 ```bash
 /path/to/replicant run --file api-test.yaml
