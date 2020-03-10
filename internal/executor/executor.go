@@ -110,5 +110,9 @@ func (e *Executor) Run(uuid string, c transaction.Config) (r transaction.Result,
 	r.DurationSeconds = time.Since(r.Time).Seconds()
 	r.Metadata = c.Metadata
 
+	if r.Failed {
+		r.Status = 1
+	}
+
 	return r, nil
 }
