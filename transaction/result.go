@@ -28,6 +28,7 @@ type Result struct {
 	Name            string            `json:"name" yaml:"name"`
 	Driver          string            `json:"driver" yaml:"driver"`
 	Failed          bool              `json:"failed" yaml:"failed"`
+	Status          int               `json:"status" yaml:"status"`
 	Message         string            `json:"message" yaml:"message"`
 	Data            string            `json:"data" yaml:"data"`
 	Time            time.Time         `json:"time" yaml:"time"`
