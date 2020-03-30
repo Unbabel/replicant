@@ -61,8 +61,7 @@ var Executor = &cobra.Command{
 
 		e, err := executor.New(config)
 		if err != nil {
-			log.Error("error creating replicant-executor").Error("error", err).Log()
-			os.Exit(1)
+			die("Error creating executor: %s", err)
 		}
 
 		router.Handle(http.MethodPost, "/api/v1/run/:uuid", func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
@@ -111,18 +110,16 @@ var Executor = &cobra.Command{
 		go func() {
 			<-signalCh
 			if err := server.Shutdown(context.Background()); err != nil {
-				log.Error("error stopping replicant-executor").Error("error", err).Log()
-				os.Exit(1)
+				die("Error creating stopping executor: %s", err)
 			}
 		}()
 
-		log.Info("starting replicant-executor").Log()
+		fmt.Println("Starting executor")
 		if err := server.ListenAndServe(); err != nil {
-			log.Error("error running replicant-cdp").Error("error", err).Log()
-			os.Exit(1)
+			die("Error starting local executor: %s", err)
 		}
 
-		log.Info("replicant-cdp stopped").Log()
+		die("Executor stopped")
 
 	},
 }

@@ -108,7 +108,7 @@ var Server = &cobra.Command{
 		}
 
 		// Register all api endpoints and start the service
-		api.AddAllRoutes("/api", srv)
+		api.AddAllRoutes(srv)
 		go srv.Start()
 
 		signalCh := make(chan os.Signal, 1)
