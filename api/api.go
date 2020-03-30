@@ -20,31 +20,37 @@ package api
 import (
 	"encoding/json"
 	"net/http"
-	"strings"
 
 	"github.com/Unbabel/replicant/server"
+	"github.com/Unbabel/replicant/transaction"
+)
+
+var (
+	EndpointTransaction = "/api/v1/transaction"
+	EndpointRun         = "/api/v1/run"
+	EndpointResult      = "/api/v1/result"
 )
 
 // Result is the api calls result envelope
 type Result struct {
-	Error   string      `json:"error,omitempty"`
-	Message string      `json:"message,omitempty"`
-	Data    interface{} `json:"data,omitempty"`
+	Error        string               `json:"error,omitempty"`
+	Message      string               `json:"message,omitempty"`
+	Results      []transaction.Result `json:"results,omitempty"`
+	Transactions []transaction.Config `json:"transactions,omitempty"`
 }
 
 // AddAllRoutes api routes to the given server with the given prefix.
 // The prefix can be empty.
-func AddAllRoutes(prefix string, server *server.Server) {
-	prefix = strings.TrimRight(prefix, "/")
-	server.AddServerHandler(http.MethodPost, prefix+`/v1/transaction`, AddTransaction)
-	server.AddServerHandler(http.MethodGet, prefix+`/v1/transaction`, GetTransactions)
-	server.AddServerHandler(http.MethodGet, prefix+`/v1/transaction/:name`, GetTransaction)
-	server.AddServerHandler(http.MethodDelete, prefix+`/v1/transaction/:name`, RemoveTransaction)
-	server.AddServerHandler(http.MethodPost, prefix+`/v1/run`, RunTransaction)
-	server.AddServerHandler(http.MethodPost, prefix+`/v1/run/:name`, RunTransactionByName)
-	server.AddServerHandler(http.MethodGet, prefix+`/v1/result`, GetResults)
-	server.AddServerHandler(http.MethodGet, prefix+`/v1/result/:name`, GetResult)
-	server.AddServerHandler(http.MethodPost, prefix+`/v1/callback/:uuid`, CallbackRequest)
+func AddAllRoutes(server *server.Server) {
+	server.AddServerHandler(http.MethodPost, EndpointTransaction, AddTransaction)
+	server.AddServerHandler(http.MethodGet, EndpointTransaction, GetTransactions)
+	server.AddServerHandler(http.MethodGet, EndpointTransaction+"/:name", GetTransaction)
+	server.AddServerHandler(http.MethodDelete, EndpointTransaction+"/:name", RemoveTransaction)
+	server.AddServerHandler(http.MethodPost, EndpointRun, RunTransaction)
+	server.AddServerHandler(http.MethodPost, EndpointRun+`/:name`, RunTransactionByName)
+	server.AddServerHandler(http.MethodGet, EndpointResult, GetResults)
+	server.AddServerHandler(http.MethodGet, EndpointResult+"/:name", GetResult)
+	server.AddServerHandler(http.MethodPost, "/api/v1/callback/:uuid", CallbackRequest)
 }
 
 // httpError wraps http status codes and error messages as json responses
