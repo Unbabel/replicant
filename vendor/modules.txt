@@ -32,9 +32,9 @@ github.com/MontFerret/ferret/pkg/stdlib/types
 github.com/MontFerret/ferret/pkg/stdlib/utils
 # github.com/PuerkitoBio/goquery v1.5.0
 github.com/PuerkitoBio/goquery
-# github.com/andybalholm/cascadia v1.0.0
+# github.com/andybalholm/cascadia v1.1.0
 github.com/andybalholm/cascadia
-# github.com/antlr/antlr4 v0.0.0-20191005235324-c81b4e69b6c3
+# github.com/antlr/antlr4 v0.0.0-20191212171830-8ae756a02574
 github.com/antlr/antlr4/doc/resources
 github.com/antlr/antlr4/runtime/Go/antlr
 # github.com/aws/aws-sdk-go v1.28.9
@@ -82,6 +82,10 @@ github.com/aws/aws-sdk-go/service/sts/stsiface
 github.com/beorn7/perks/quantile
 # github.com/brunotm/log v0.3.2
 github.com/brunotm/log
+# github.com/brunotm/replicant v0.1.13
+github.com/brunotm/replicant/store
+github.com/brunotm/replicant/transaction
+github.com/brunotm/replicant/transaction/callback
 # github.com/cespare/xxhash/v2 v2.1.0
 github.com/cespare/xxhash/v2
 # github.com/containous/yaegi v0.8.1
@@ -154,7 +158,7 @@ github.com/mafredri/cdp/protocol/webaudio
 github.com/mafredri/cdp/protocol/webauthn
 github.com/mafredri/cdp/rpcc
 github.com/mafredri/cdp/session
-# github.com/mailru/easyjson v0.0.0-20190626092158-b2ccc519800e
+# github.com/mailru/easyjson v0.7.0
 github.com/mailru/easyjson
 github.com/mailru/easyjson/buffer
 github.com/mailru/easyjson/jlexer
@@ -215,12 +219,12 @@ github.com/syndtr/goleveldb/leveldb/opt
 github.com/syndtr/goleveldb/leveldb/storage
 github.com/syndtr/goleveldb/leveldb/table
 github.com/syndtr/goleveldb/leveldb/util
-# golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297
+# golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553
 golang.org/x/net/html
 golang.org/x/net/html/atom
-# golang.org/x/sync v0.0.0-20190423024810-112230192c58
+# golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 golang.org/x/sync/errgroup
-# golang.org/x/sys v0.0.0-20191010194322-b09406accb47
+# golang.org/x/sys v0.0.0-20191210023423-ac6580df4449
 golang.org/x/sys/windows
 # gopkg.in/sourcemap.v1 v1.0.5
 gopkg.in/sourcemap.v1
