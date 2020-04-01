@@ -37,6 +37,7 @@ type Config struct {
 	Schedule   string                 `json:"schedule" yaml:"schedule"`
 	Timeout    string                 `json:"timeout" yaml:"timeout"`
 	RetryCount int                    `json:"retry_count" yaml:"retry_count"`
+	BinaryPath string                 `json:"binary_path" yaml:"binary_path"`
 	Script     string                 `json:"script" yaml:"script"`
 	CallBack   *callback.Config       `json:"callback" yaml:"callback"`
 	Inputs     map[string]interface{} `json:"inputs" yaml:"inputs"`
