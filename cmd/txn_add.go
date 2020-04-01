@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"io/ioutil"
-
 	"github.com/Unbabel/replicant/client"
 	"github.com/Unbabel/replicant/internal/cmdutil"
 	"github.com/Unbabel/replicant/transaction"
@@ -18,18 +16,21 @@ var Add = &cobra.Command{
 		var err error
 		var tx transaction.Config
 
-		file := cmdutil.GetFlagString(cmd, "file")
-		if file == "" {
-			die("Transaction file must be specified")
-		}
-
-		buf, err := ioutil.ReadFile(file)
+		buf, err := loadFile(cmdutil.GetFlagString(cmd, "file"))
 		if err != nil {
-			die("Error reading transaction: %s", err)
+			die("Error reading transaction file: %s", err)
 		}
 
 		if err = yaml.Unmarshal(buf, &tx); err != nil {
-			die("Error reading transaction: %s", err)
+			die("Error reading transaction file: %s", err)
+		}
+
+		if tx.Driver == "go_binary" {
+			buf, err := loadFile(cmdutil.GetFlagString(cmd, "binary"))
+			if err != nil {
+				die("Error reading transaction's binary: %s", err)
+			}
+			tx.Binary = buf
 		}
 
 		c, err := client.New(client.Config{
