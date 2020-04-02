@@ -33,6 +33,7 @@ import (
 	"github.com/Unbabel/replicant/log"
 	"github.com/Unbabel/replicant/store"
 	"github.com/Unbabel/replicant/transaction"
+	"github.com/Unbabel/replicant/volume"
 	"github.com/segmentio/ksuid"
 )
 
@@ -62,13 +63,15 @@ type Manager struct {
 	scheduler    *scheduler.Scheduler
 	transactions store.Store
 	results      *xz.Map
+	volume       *volume.Volume
 }
 
 // New creates a new manager
-func New(s store.Store, executorURL string) (manager *Manager) {
+func New(s store.Store, executorURL string, volume *volume.Volume) (manager *Manager) {
 	manager = &Manager{}
 	manager.client = &http.Client{}
 	manager.executorURL = executorURL + "/api/v1/run/"
+	manager.volume = volume
 	manager.transactions = s
 	manager.results = xz.NewMap()
 	manager.scheduler = scheduler.New()
@@ -189,6 +192,14 @@ func (m *Manager) Add(config transaction.Config) (err error) {
 
 	if ok {
 		return fmt.Errorf("manager: transaction already exists")
+	}
+
+	if config.Driver == "go_binary" {
+		if err := m.volume.Store(config.Name, config.Binary); err != nil {
+			return fmt.Errorf("manager: failed to store the transaction's binary")
+		}
+
+		config.Binary = []byte{}
 	}
 
 	if config.Schedule != "" {
