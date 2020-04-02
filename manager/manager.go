@@ -214,6 +214,18 @@ func (m *Manager) Add(config transaction.Config) (err error) {
 // Delete a transaction from the manager by name
 func (m *Manager) Delete(name string) (err error) {
 
+	txn, err := m.transactions.Get(name)
+	if err != nil {
+		return fmt.Errorf("manager: %w", err)
+	}
+
+	if txn.Driver == "go_binary" {
+		if err := m.volume.Delete(name); err != nil {
+			log.Error("error deleting the transaction's binary").
+				String("name", name).Error("error", err).Log()
+		}
+	}
+
 	if err = m.transactions.Delete(name); err != nil {
 		return fmt.Errorf("manager: %w", err)
 	}
