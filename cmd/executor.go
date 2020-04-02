@@ -15,6 +15,7 @@ import (
 	"github.com/Unbabel/replicant/internal/executor"
 	"github.com/Unbabel/replicant/log"
 	"github.com/Unbabel/replicant/transaction"
+	"github.com/Unbabel/replicant/volume"
 	"github.com/julienschmidt/httprouter"
 	"github.com/spf13/cobra"
 )
@@ -29,6 +30,8 @@ func init() {
 	Executor.Flags().Bool("chrome-enable-local", false, "Enable running a local chrome worker process for web transactions")
 	Executor.Flags().String("chrome-local-command", "/headless-shell/headless-shell --headless --no-zygote --no-sandbox --disable-gpu --disable-software-rasterizer --disable-dev-shm-usage --remote-debugging-address=127.0.0.1 --remote-debugging-port=9222 --incognito --disable-shared-workers --disable-remote-fonts --disable-background-networking --disable-crash-reporter --disable-default-apps --disable-domain-reliability --disable-extensions --disable-shared-workers --disable-setuid-sandbox", "Command for launching chrome with arguments included")
 	Executor.Flags().Duration("chrome-recycle-interval", time.Minute*5, "Chrome recycle interval for locally managed chrome process")
+	Executor.Flags().String("shared-volume", "/tmp", "Path of the shared volume that is required to store the test binaries")
+
 }
 
 // Executor command
@@ -40,6 +43,7 @@ var Executor = &cobra.Command{
 		config := executor.Config{}
 		config.ServerURL = cmdutil.GetFlagString(cmd, "server-url")
 		config.AdvertiseURL = cmdutil.GetFlagString(cmd, "webhook-advertise-url")
+		config.Volume = volume.New(cmdutil.GetFlagString(cmd, "shared-volume"))
 
 		// Setup chrome support for web applications
 		config.Web.ServerURL = cmdutil.GetFlagString(cmd, "chrome-remote-url")

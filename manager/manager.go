@@ -195,7 +195,7 @@ func (m *Manager) Add(config transaction.Config) (err error) {
 	}
 
 	if config.Driver == "go_binary" {
-		if err := m.volume.Store(config.Name, config.Binary); err != nil {
+		if err := m.volume.Store(config.Name+".so", config.Binary); err != nil {
 			return fmt.Errorf("manager: failed to store the transaction's binary")
 		}
 
