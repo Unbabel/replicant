@@ -15,7 +15,6 @@ import (
 
 func init() {
 	Get.Flags().Bool("results", false, "Get transaction results")
-	Get.Flags().StringP("output", "o", "", "Detailed output format yaml or json")
 }
 
 // Get command
@@ -136,8 +135,9 @@ func getResults(cmd *cobra.Command, c *client.Client) {
 			fmt.Printf("%s\n", buf)
 		}
 
+		t, _ := rs[x].Time.MarshalText()
 		fmt.Fprintf(w, "%s\t%s\t%t\t%.2f\t%d\t%s\n",
-			rs[x].Name, rs[x].Driver, rs[x].Failed, rs[x].DurationSeconds, rs[x].RetryCount, rs[x].Time)
+			rs[x].Name, rs[x].Driver, rs[x].Failed, rs[x].DurationSeconds, rs[x].RetryCount, t)
 	}
 
 	if output == "" {

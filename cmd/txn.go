@@ -13,6 +13,7 @@ func init() {
 	Txn.PersistentFlags().StringP("password", "p", "", "Replicant server password")
 	Txn.PersistentFlags().StringP("file", "f", "", "Path to transaction definition file")
 	Txn.PersistentFlags().Bool("insecure", false, "Skip server certificate verification")
+	Txn.PersistentFlags().StringP("output", "o", "", "Detailed output format yaml or json")
 	Txn.PersistentFlags().DurationP("timeout", "t", 5*time.Minute, "Replicant server timeout for running transactions")
 	Txn.AddCommand(Add)
 	Txn.AddCommand(Get)

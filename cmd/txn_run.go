@@ -1,11 +1,13 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
+	"text/tabwriter"
 
 	"github.com/Unbabel/replicant/client"
-	"github.com/Unbabel/replicant/emitter/stdout"
 	"github.com/Unbabel/replicant/internal/cmdutil"
 	"github.com/Unbabel/replicant/transaction"
 	"github.com/spf13/cobra"
@@ -38,9 +40,6 @@ var Run = &cobra.Command{
 			}
 		}
 
-		var result transaction.Result
-		em := stdout.New(stdout.Config{Pretty: true})
-
 		c, err := client.New(client.Config{
 			URL:                cmdutil.GetFlagString(cmd, "server-url"),
 			Username:           cmdutil.GetFlagString(cmd, "username"),
@@ -53,6 +52,7 @@ var Run = &cobra.Command{
 			die("Error creating client: %s", err)
 		}
 
+		var result transaction.Result
 		switch {
 		case file != "":
 			result, err = c.Run(tx)
@@ -64,7 +64,28 @@ var Run = &cobra.Command{
 			die("Error running transaction: %s", err)
 		}
 
-		em.Emit(result)
+		switch cmdutil.GetFlagString(cmd, "output") {
+		case "":
+			w := tabwriter.NewWriter(os.Stdout, 0, 1, 4, ' ', tabwriter.TabIndent)
+			fmt.Fprintf(w, "NAME\tDRIVER\tFAILED\tDURATION\tRETRIES\tTIME\n")
+			t, _ := result.Time.MarshalText()
+			fmt.Fprintf(w, "%s\t%s\t%t\t%.2f\t%d\t%s\n",
+				result.Name, result.Driver, result.Failed, result.DurationSeconds, result.RetryCount, t)
+			w.Flush()
+		case "json":
+			buf, err := json.MarshalIndent(&result, "", "  ")
+			if err != nil {
+				die(err.Error())
+			}
+			fmt.Printf("%s\n", buf)
+		case "yaml":
+			buf, err := yaml.Marshal(&result)
+			if err != nil {
+				die(err.Error())
+			}
+			fmt.Printf("%s\n", buf)
+		}
+
 		fmt.Print()
 	},
 }

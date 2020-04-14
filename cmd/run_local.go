@@ -1,10 +1,12 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
+	"text/tabwriter"
 
-	"github.com/Unbabel/replicant/emitter/stdout"
 	"github.com/Unbabel/replicant/internal/cmdutil"
 	"github.com/Unbabel/replicant/internal/executor"
 	"github.com/Unbabel/replicant/internal/tmpl"
@@ -56,13 +58,33 @@ var RunLocal = &cobra.Command{
 			die("Error creating local executor: %s", err)
 		}
 
-		em := stdout.New(stdout.Config{Pretty: true})
 		result, err := e.Run(ksuid.New().String(), tx)
 		if err != nil {
 			die("Error running transaction: %s", err)
 		}
 
-		em.Emit(result)
+		switch cmdutil.GetFlagString(cmd, "output") {
+		case "":
+			w := tabwriter.NewWriter(os.Stdout, 0, 1, 4, ' ', tabwriter.TabIndent)
+			fmt.Fprintf(w, "NAME\tDRIVER\tFAILED\tDURATION\tRETRIES\tTIME\n")
+			t, _ := result.Time.MarshalText()
+			fmt.Fprintf(w, "%s\t%s\t%t\t%.2f\t%d\t%s\n",
+				result.Name, result.Driver, result.Failed, result.DurationSeconds, result.RetryCount, t)
+			w.Flush()
+		case "json":
+			buf, err := json.MarshalIndent(&result, "", "  ")
+			if err != nil {
+				die(err.Error())
+			}
+			fmt.Printf("%s\n", buf)
+		case "yaml":
+			buf, err := yaml.Marshal(&result)
+			if err != nil {
+				die(err.Error())
+			}
+			fmt.Printf("%s\n", buf)
+		}
+
 		fmt.Print()
 	},
 }
