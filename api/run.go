@@ -61,7 +61,7 @@ func RunTransaction(srv *server.Server) (handle server.Handler) {
 		}
 
 		res := srv.Manager().Run(config)
-		result.Data = []transaction.Result{res}
+		result.Results = []transaction.Result{res}
 
 		buf, err = json.Marshal(&result)
 		if err != nil {
@@ -91,7 +91,7 @@ func RunTransactionByName(srv *server.Server) (handle server.Handler) {
 			return
 		}
 
-		result.Data = []transaction.Result{res}
+		result.Results = []transaction.Result{res}
 		buf, err = json.Marshal(&result)
 		if err != nil {
 			httpError(w, fmt.Errorf("error serializing results: %w", err), http.StatusInternalServerError)

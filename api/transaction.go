@@ -96,7 +96,7 @@ func GetTransaction(srv *server.Server) (handle server.Handler) {
 			return
 		}
 
-		result.Data = []transaction.Config{config}
+		result.Transactions = []transaction.Config{config}
 		buf, err := json.Marshal(&result)
 		if err != nil {
 			httpError(w, fmt.Errorf("error serializing results: %w", err), http.StatusInternalServerError)
@@ -115,7 +115,7 @@ func GetTransactions(srv *server.Server) (handle server.Handler) {
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 
 		var result Result
-		result.Data = srv.Manager().GetAll()
+		result.Transactions = srv.Manager().GetAll()
 		buf, err := json.Marshal(&result)
 		if err != nil {
 			httpError(w, fmt.Errorf("error serializing results: %w", err), http.StatusInternalServerError)
