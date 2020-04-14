@@ -33,6 +33,7 @@ import (
 	"github.com/Unbabel/replicant/log"
 	"github.com/Unbabel/replicant/store"
 	"github.com/Unbabel/replicant/transaction"
+	"github.com/Unbabel/replicant/volume"
 	"github.com/segmentio/ksuid"
 )
 
@@ -62,13 +63,15 @@ type Manager struct {
 	scheduler    *scheduler.Scheduler
 	transactions store.Store
 	results      *xz.Map
+	volume       *volume.Volume
 }
 
 // New creates a new manager
-func New(s store.Store, executorURL string) (manager *Manager) {
+func New(s store.Store, executorURL string, volume *volume.Volume) (manager *Manager) {
 	manager = &Manager{}
 	manager.client = &http.Client{}
 	manager.executorURL = executorURL + "/api/v1/run/"
+	manager.volume = volume
 	manager.transactions = s
 	manager.results = xz.NewMap()
 	manager.scheduler = scheduler.New()
@@ -191,6 +194,14 @@ func (m *Manager) Add(config transaction.Config) (err error) {
 		return fmt.Errorf("manager: transaction already exists")
 	}
 
+	if config.Driver == "go_binary" {
+		if err := m.volume.Store(config.Name+".so", config.Binary); err != nil {
+			return fmt.Errorf("manager: failed to store the transaction's binary")
+		}
+
+		config.Binary = []byte{}
+	}
+
 	if config.Schedule != "" {
 		if err = m.schedule(config); err != nil {
 			return err
@@ -202,6 +213,18 @@ func (m *Manager) Add(config transaction.Config) (err error) {
 
 // Delete a transaction from the manager by name
 func (m *Manager) Delete(name string) (err error) {
+
+	txn, err := m.transactions.Get(name)
+	if err != nil {
+		return fmt.Errorf("manager: %w", err)
+	}
+
+	if txn.Driver == "go_binary" {
+		if err := m.volume.Delete(name); err != nil {
+			log.Error("error deleting the transaction's binary").
+				String("name", name).Error("error", err).Log()
+		}
+	}
 
 	if err = m.transactions.Delete(name); err != nil {
 		return fmt.Errorf("manager: %w", err)

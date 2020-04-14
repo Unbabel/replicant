@@ -9,10 +9,12 @@ import (
 
 	"github.com/Unbabel/replicant/driver"
 	godriver "github.com/Unbabel/replicant/driver/go"
+	gobdriver "github.com/Unbabel/replicant/driver/go_binary"
 	"github.com/Unbabel/replicant/driver/javascript"
 	"github.com/Unbabel/replicant/driver/web"
 	"github.com/Unbabel/replicant/internal/xz"
 	"github.com/Unbabel/replicant/transaction"
+	"github.com/Unbabel/replicant/volume"
 )
 
 // Executor is the replicant execution service
@@ -26,6 +28,7 @@ type Config struct {
 	Web          web.Config
 	ServerURL    string
 	AdvertiseURL string
+	Volume       *volume.Volume
 }
 
 // New creates a new executor
@@ -51,6 +54,12 @@ func New(c Config) (e *Executor, err error) {
 	e.drivers.Store(drv.Type(), drv)
 
 	drv, err = godriver.New()
+	if err != nil {
+		return nil, err
+	}
+	e.drivers.Store(drv.Type(), drv)
+
+	drv, err = gobdriver.New(c.Volume)
 	if err != nil {
 		return nil, err
 	}

@@ -28,6 +28,7 @@ import (
 
 	"github.com/Unbabel/replicant/log"
 	"github.com/Unbabel/replicant/manager"
+	"github.com/Unbabel/replicant/volume"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -37,6 +38,7 @@ type Config struct {
 	WriteTimeout      time.Duration `json:"write_timeout" yaml:"write_timeout"`
 	ReadTimeout       time.Duration `json:"read_timeout" yaml:"read_timeout"`
 	ReadHeaderTimeout time.Duration `json:"read_header_timeout" yaml:"read_header_timeout"`
+	SharedVolume      string        `json:"shared_volume" yaml:"shared_volume"`
 }
 
 // Server is an replicant manager and api server
@@ -45,6 +47,7 @@ type Server struct {
 	http    *http.Server
 	router  *httprouter.Router
 	manager *manager.Manager
+	volume  *volume.Volume
 }
 
 // New creates a new replicant server

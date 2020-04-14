@@ -16,6 +16,7 @@ import (
 	"github.com/Unbabel/replicant/server"
 	"github.com/Unbabel/replicant/store"
 	"github.com/Unbabel/replicant/transaction/callback"
+	"github.com/Unbabel/replicant/volume"
 	"github.com/julienschmidt/httprouter"
 	"github.com/spf13/cobra"
 
@@ -36,6 +37,7 @@ func init() {
 	Server.Flags().String("webhook-advertise-url", "http://localhost:8080", "URL to advertise when receiving webhook based async responses")
 	Server.Flags().String("webhook-path-prefix", "/callback", "Path prefix to receive callbacks on, eg: /<path-prefix>/<transaction-uuid>")
 	Server.Flags().Bool("debug", false, "Expose a debug profile endpoint at /debug/pprof")
+	Server.Flags().String("shared-volume", "/tmp", "Path of the shared volume that is required to store the test binaries")
 
 }
 
@@ -57,7 +59,8 @@ var Server = &cobra.Command{
 
 		// Setup manager
 		executorURL := cmdutil.GetFlagString(cmd, "executor-url")
-		m := manager.New(st, executorURL)
+		volume := volume.New(cmdutil.GetFlagString(cmd, "shared-volume"))
+		m := manager.New(st, executorURL, volume)
 
 		emitStdout := cmdutil.GetFlagBool(cmd, "emit-stdout")
 		if emitStdout {
@@ -88,12 +91,14 @@ var Server = &cobra.Command{
 		// Setup server
 		address := cmdutil.GetFlagString(cmd, "listen-address")
 		timeout := cmdutil.GetFlagDuration(cmd, "max-runtime")
+		sharedVolume := cmdutil.GetFlagString(cmd, "shared-volume")
 
 		srv, err := server.New(server.Config{
 			ListenAddress:     address,
 			ReadTimeout:       timeout,
 			WriteTimeout:      timeout,
-			ReadHeaderTimeout: timeout},
+			ReadHeaderTimeout: timeout,
+			SharedVolume:      sharedVolume},
 			m, router)
 
 		if err != nil {

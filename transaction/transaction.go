@@ -41,4 +41,5 @@ type Config struct {
 	CallBack   *callback.Config       `json:"callback" yaml:"callback"`
 	Inputs     map[string]interface{} `json:"inputs" yaml:"inputs"`
 	Metadata   map[string]string      `json:"metadata" yaml:"metadata"`
+	Binary     []byte                 `json:"binary" yaml:"binary"`
 }
