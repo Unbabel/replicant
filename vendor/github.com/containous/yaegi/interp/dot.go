@@ -3,12 +3,14 @@ package interp
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
-// astDot displays an AST in graphviz dot(1) format using dotty(1) co-process
+// astDot displays an AST in graphviz dot(1) format using dotty(1) co-process.
 func (n *node) astDot(out io.Writer, name string) {
 	fmt.Fprintf(out, "digraph ast {\n")
 	fmt.Fprintf(out, "labelloc=\"t\"\n")
@@ -34,11 +36,11 @@ func (n *node) astDot(out io.Writer, name string) {
 	fmt.Fprintf(out, "}\n")
 }
 
-// cfgDot displays a CFG in graphviz dot(1) format using dotty(1) co-process
+// cfgDot displays a CFG in graphviz dot(1) format using dotty(1) co-process.
 func (n *node) cfgDot(out io.Writer) {
 	fmt.Fprintf(out, "digraph cfg {\n")
 	n.Walk(nil, func(n *node) {
-		if n.kind == basicLit || n.kind == identExpr || n.tnext == nil {
+		if n.kind == basicLit || n.tnext == nil {
 			return
 		}
 		var label string
@@ -58,10 +60,19 @@ func (n *node) cfgDot(out io.Writer) {
 	fmt.Fprintf(out, "}\n")
 }
 
-// dotX returns an output stream to a dot(1) co-process where to write data in .dot format
-func dotX() io.WriteCloser {
-	cmd := exec.Command("dotty", "-")
-	//cmd := exec.Command("dot", "-T", "xlib")
+type nopCloser struct {
+	io.Writer
+}
+
+func (nopCloser) Close() error { return nil }
+
+// dotWriter returns an output stream to a dot(1) co-process where to write data in .dot format.
+func dotWriter(dotCmd string) io.WriteCloser {
+	if dotCmd == "" {
+		return nopCloser{ioutil.Discard}
+	}
+	fields := strings.Fields(dotCmd)
+	cmd := exec.Command(fields[0], fields[1:]...)
 	dotin, err := cmd.StdinPipe()
 	if err != nil {
 		log.Fatal(err)
@@ -70,4 +81,15 @@ func dotX() io.WriteCloser {
 		log.Fatal(err)
 	}
 	return dotin
+}
+
+func defaultDotCmd(filePath, prefix string) string {
+	dir, fileName := filepath.Split(filePath)
+	ext := filepath.Ext(fileName)
+	if ext == "" {
+		fileName += ".dot"
+	} else {
+		fileName = strings.Replace(fileName, ext, ".dot", 1)
+	}
+	return "dot -Tdot -o" + dir + prefix + fileName
 }

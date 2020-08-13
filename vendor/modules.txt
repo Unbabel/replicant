@@ -84,7 +84,7 @@ github.com/beorn7/perks/quantile
 github.com/brunotm/log
 # github.com/cespare/xxhash/v2 v2.1.0
 github.com/cespare/xxhash/v2
-# github.com/containous/yaegi v0.6.2
+# github.com/containous/yaegi v0.8.13
 github.com/containous/yaegi/interp
 github.com/containous/yaegi/stdlib
 # github.com/corpix/uarand v0.1.1

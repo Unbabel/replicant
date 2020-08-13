@@ -51,8 +51,8 @@ github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5P
 github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/codegangsta/cli v1.20.0/go.mod h1:/qJNoX69yVSKu5o4jLyXAENLRyk1uhi7zkbQ3slBdOA=
-github.com/containous/yaegi v0.6.2 h1:uMdUzqq1eusl73REaArOcNYaX3NnICC/bX2X38iswYY=
-github.com/containous/yaegi v0.6.2/go.mod h1:RLj4MAvN8JB1w40l4fn9dd/U1hH23CXABvro3D3gOBE=
+github.com/containous/yaegi v0.8.13 h1:ADhAZok9av2wxge4/LxNqZHG/+rwHZcwpSLKmy9cz48=
+github.com/containous/yaegi v0.8.13/go.mod h1:Yj82MHpXQ9/h3ukzc2numJQ/Wr4+M3C9YLMzNjFtd3o=
 github.com/coreos/bbolt v1.3.2/go.mod h1:iRUV2dpdMOn7Bo10OQBFzIJO9kkE559Wcmn+qkEiiKk=
 github.com/coreos/etcd v3.3.10+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc32PjwdhPthX9715RE=
 github.com/coreos/go-semver v0.2.0/go.mod h1:nnelYz7RCh+5ahJtPPxZlU+153eP4D4r3EedlOD2RNk=

@@ -3,17 +3,19 @@ package interp
 import (
 	"fmt"
 	"go/ast"
+	"go/constant"
 	"go/parser"
 	"go/scanner"
 	"go/token"
 	"reflect"
 	"strconv"
+	"sync/atomic"
 )
 
-// nkind defines the kind of AST, i.e. the grammar category
+// nkind defines the kind of AST, i.e. the grammar category.
 type nkind uint
 
-// Node kinds for the go language
+// Node kinds for the go language.
 const (
 	undefNode nkind = iota
 	addressExpr
@@ -29,7 +31,10 @@ const (
 	caseBody
 	caseClause
 	chanType
+	chanTypeSend
+	chanTypeRecv
 	commClause
+	commClauseDefault
 	compositeLitExpr
 	constDecl
 	continueStmt
@@ -73,8 +78,6 @@ const (
 	parenExpr
 	rangeStmt
 	returnStmt
-	rvalueExpr
-	rtypeExpr
 	selectStmt
 	selectorExpr
 	selectorImport
@@ -94,82 +97,83 @@ const (
 )
 
 var kinds = [...]string{
-	undefNode:        "undefNode",
-	addressExpr:      "addressExpr",
-	arrayType:        "arrayType",
-	assignStmt:       "assignStmt",
-	assignXStmt:      "assignXStmt",
-	basicLit:         "basicLit",
-	binaryExpr:       "binaryExpr",
-	blockStmt:        "blockStmt",
-	branchStmt:       "branchStmt",
-	breakStmt:        "breakStmt",
-	callExpr:         "callExpr",
-	caseBody:         "caseBody",
-	caseClause:       "caseClause",
-	chanType:         "chanType",
-	commClause:       "commClause",
-	compositeLitExpr: "compositeLitExpr",
-	constDecl:        "constDecl",
-	continueStmt:     "continueStmt",
-	declStmt:         "declStmt",
-	deferStmt:        "deferStmt",
-	defineStmt:       "defineStmt",
-	defineXStmt:      "defineXStmt",
-	ellipsisExpr:     "ellipsisExpr",
-	exprStmt:         "exprStmt",
-	fallthroughtStmt: "fallthroughStmt",
-	fieldExpr:        "fieldExpr",
-	fieldList:        "fieldList",
-	fileStmt:         "fileStmt",
-	forStmt0:         "forStmt0",
-	forStmt1:         "forStmt1",
-	forStmt2:         "forStmt2",
-	forStmt3:         "forStmt3",
-	forStmt3a:        "forStmt3a",
-	forStmt4:         "forStmt4",
-	forRangeStmt:     "forRangeStmt",
-	funcDecl:         "funcDecl",
-	funcType:         "funcType",
-	funcLit:          "funcLit",
-	goStmt:           "goStmt",
-	gotoStmt:         "gotoStmt",
-	identExpr:        "identExpr",
-	ifStmt0:          "ifStmt0",
-	ifStmt1:          "ifStmt1",
-	ifStmt2:          "ifStmt2",
-	ifStmt3:          "ifStmt3",
-	importDecl:       "importDecl",
-	importSpec:       "importSpec",
-	incDecStmt:       "incDecStmt",
-	indexExpr:        "indexExpr",
-	interfaceType:    "interfaceType",
-	keyValueExpr:     "keyValueExpr",
-	labeledStmt:      "labeledStmt",
-	landExpr:         "landExpr",
-	lorExpr:          "lorExpr",
-	mapType:          "mapType",
-	parenExpr:        "parenExpr",
-	rangeStmt:        "rangeStmt",
-	returnStmt:       "returnStmt",
-	rvalueExpr:       "rvalueExpr",
-	rtypeExpr:        "rtypeExpr",
-	selectStmt:       "selectStmt",
-	selectorExpr:     "selectorExpr",
-	selectorImport:   "selectorImport",
-	sendStmt:         "sendStmt",
-	sliceExpr:        "sliceExpr",
-	starExpr:         "starExpr",
-	structType:       "structType",
-	switchStmt:       "switchStmt",
-	switchIfStmt:     "switchIfStmt",
-	typeAssertExpr:   "typeAssertExpr",
-	typeDecl:         "typeDecl",
-	typeSpec:         "typeSpec",
-	typeSwitch:       "typeSwitch",
-	unaryExpr:        "unaryExpr",
-	valueSpec:        "valueSpec",
-	varDecl:          "varDecl",
+	undefNode:         "undefNode",
+	addressExpr:       "addressExpr",
+	arrayType:         "arrayType",
+	assignStmt:        "assignStmt",
+	assignXStmt:       "assignXStmt",
+	basicLit:          "basicLit",
+	binaryExpr:        "binaryExpr",
+	blockStmt:         "blockStmt",
+	branchStmt:        "branchStmt",
+	breakStmt:         "breakStmt",
+	callExpr:          "callExpr",
+	caseBody:          "caseBody",
+	caseClause:        "caseClause",
+	chanType:          "chanType",
+	chanTypeSend:      "chanTypeSend",
+	chanTypeRecv:      "chanTypeRecv",
+	commClause:        "commClause",
+	commClauseDefault: "commClauseDefault",
+	compositeLitExpr:  "compositeLitExpr",
+	constDecl:         "constDecl",
+	continueStmt:      "continueStmt",
+	declStmt:          "declStmt",
+	deferStmt:         "deferStmt",
+	defineStmt:        "defineStmt",
+	defineXStmt:       "defineXStmt",
+	ellipsisExpr:      "ellipsisExpr",
+	exprStmt:          "exprStmt",
+	fallthroughtStmt:  "fallthroughStmt",
+	fieldExpr:         "fieldExpr",
+	fieldList:         "fieldList",
+	fileStmt:          "fileStmt",
+	forStmt0:          "forStmt0",
+	forStmt1:          "forStmt1",
+	forStmt2:          "forStmt2",
+	forStmt3:          "forStmt3",
+	forStmt3a:         "forStmt3a",
+	forStmt4:          "forStmt4",
+	forRangeStmt:      "forRangeStmt",
+	funcDecl:          "funcDecl",
+	funcType:          "funcType",
+	funcLit:           "funcLit",
+	goStmt:            "goStmt",
+	gotoStmt:          "gotoStmt",
+	identExpr:         "identExpr",
+	ifStmt0:           "ifStmt0",
+	ifStmt1:           "ifStmt1",
+	ifStmt2:           "ifStmt2",
+	ifStmt3:           "ifStmt3",
+	importDecl:        "importDecl",
+	importSpec:        "importSpec",
+	incDecStmt:        "incDecStmt",
+	indexExpr:         "indexExpr",
+	interfaceType:     "interfaceType",
+	keyValueExpr:      "keyValueExpr",
+	labeledStmt:       "labeledStmt",
+	landExpr:          "landExpr",
+	lorExpr:           "lorExpr",
+	mapType:           "mapType",
+	parenExpr:         "parenExpr",
+	rangeStmt:         "rangeStmt",
+	returnStmt:        "returnStmt",
+	selectStmt:        "selectStmt",
+	selectorExpr:      "selectorExpr",
+	selectorImport:    "selectorImport",
+	sendStmt:          "sendStmt",
+	sliceExpr:         "sliceExpr",
+	starExpr:          "starExpr",
+	structType:        "structType",
+	switchStmt:        "switchStmt",
+	switchIfStmt:      "switchIfStmt",
+	typeAssertExpr:    "typeAssertExpr",
+	typeDecl:          "typeDecl",
+	typeSpec:          "typeSpec",
+	typeSwitch:        "typeSwitch",
+	unaryExpr:         "unaryExpr",
+	valueSpec:         "valueSpec",
+	varDecl:           "varDecl",
 }
 
 func (k nkind) String() string {
@@ -179,13 +183,13 @@ func (k nkind) String() string {
 	return "nKind(" + strconv.Itoa(int(k)) + ")"
 }
 
-// astError represents an error during AST build stage
+// astError represents an error during AST build stage.
 type astError error
 
-// action defines the node action to perform at execution
+// action defines the node action to perform at execution.
 type action uint
 
-// Node actions for the go language
+// Node actions for the go language.
 const (
 	aNop action = iota
 	aAddr
@@ -197,16 +201,21 @@ const (
 	aAndAssign
 	aAndNot
 	aAndNotAssign
+	aBitNot
+	aBranch
 	aCall
+	aCallSlice
 	aCase
 	aCompositeLit
+	aConvert
 	aDec
-	aDefer
 	aEqual
 	aGreater
 	aGreaterEqual
 	aGetFunc
 	aGetIndex
+	aGetMethod
+	aGetSym
 	aInc
 	aLand
 	aLor
@@ -215,11 +224,12 @@ const (
 	aMethod
 	aMul
 	aMulAssign
-	aNegate
+	aNeg
 	aNot
 	aNotEqual
 	aOr
 	aOrAssign
+	aPos
 	aQuo
 	aQuoAssign
 	aRange
@@ -240,6 +250,7 @@ const (
 	aTypeAssert
 	aXor
 	aXorAssign
+	aMax
 )
 
 var actions = [...]string{
@@ -253,15 +264,20 @@ var actions = [...]string{
 	aAndAssign:    "&=",
 	aAndNot:       "&^",
 	aAndNotAssign: "&^=",
+	aBitNot:       "^",
+	aBranch:       "branch",
 	aCall:         "call",
+	aCallSlice:    "callSlice",
 	aCase:         "case",
 	aCompositeLit: "compositeLit",
+	aConvert:      "convert",
 	aDec:          "--",
-	aDefer:        "defer",
 	aEqual:        "==",
 	aGreater:      ">",
 	aGetFunc:      "getFunc",
 	aGetIndex:     "getIndex",
+	aGetMethod:    "getMethod",
+	aGetSym:       ".",
 	aInc:          "++",
 	aLand:         "&&",
 	aLor:          "||",
@@ -269,11 +285,12 @@ var actions = [...]string{
 	aMethod:       "Method",
 	aMul:          "*",
 	aMulAssign:    "*=",
-	aNegate:       "-",
+	aNeg:          "-",
 	aNot:          "!",
 	aNotEqual:     "!=",
 	aOr:           "|",
 	aOrAssign:     "|=",
+	aPos:          "+",
 	aQuo:          "/",
 	aQuoAssign:    "/=",
 	aRange:        "range",
@@ -320,6 +337,7 @@ func (interp *Interpreter) firstToken(src string) token.Token {
 func (interp *Interpreter) ast(src, name string) (string, *node, error) {
 	inRepl := name == ""
 	var inFunc bool
+	var mode parser.Mode
 
 	// Allow incremental parsing of declarations or statements, by inserting
 	// them in a pseudo file package or function. Those statements or
@@ -334,16 +352,20 @@ func (interp *Interpreter) ast(src, name string) (string, *node, error) {
 			inFunc = true
 			src = "package main; func main() {" + src + "}"
 		}
+		// Parse comments in REPL mode, to allow tag setting
+		mode |= parser.ParseComments
 	}
 
-	if ok, err := interp.buildOk(interp.context, name, src); !ok || err != nil {
+	if ok, err := interp.buildOk(&interp.context, name, src); !ok || err != nil {
 		return "", nil, err // skip source not matching build constraints
 	}
 
-	f, err := parser.ParseFile(interp.fset, name, src, 0)
+	f, err := parser.ParseFile(interp.fset, name, src, mode)
 	if err != nil {
 		return "", nil, err
 	}
+
+	setYaegiTags(&interp.context, f.Comments)
 
 	var root *node
 	var anc astNode
@@ -351,9 +373,9 @@ func (interp *Interpreter) ast(src, name string) (string, *node, error) {
 	var pkgName string
 
 	addChild := func(root **node, anc astNode, pos token.Pos, kind nkind, act action) *node {
-		interp.nindex++
 		var i interface{}
-		n := &node{anc: anc.node, interp: interp, index: interp.nindex, pos: pos, kind: kind, action: act, val: &i, gen: builtin[act]}
+		nindex := atomic.AddInt64(&interp.nindex, 1)
+		n := &node{anc: anc.node, interp: interp, index: nindex, pos: pos, kind: kind, action: act, val: &i, gen: builtin[act]}
 		n.start = n
 		if anc.node == nil {
 			*root = n
@@ -364,15 +386,15 @@ func (interp *Interpreter) ast(src, name string) (string, *node, error) {
 				if len(ancAst.List)+len(ancAst.Body) == len(anc.node.child) {
 					// All case clause children are collected.
 					// Split children in condition and body nodes to desambiguify the AST.
-					interp.nindex++
-					body := &node{anc: anc.node, interp: interp, index: interp.nindex, pos: pos, kind: caseBody, action: aNop, val: &i, gen: nop}
+					nindex = atomic.AddInt64(&interp.nindex, 1)
+					body := &node{anc: anc.node, interp: interp, index: nindex, pos: pos, kind: caseBody, action: aNop, val: &i, gen: nop}
 
 					if ts := anc.node.anc.anc; ts.kind == typeSwitch && ts.child[1].action == aAssign {
 						// In type switch clause, if a switch guard is assigned, duplicate the switch guard symbol
 						// in each clause body, so a different guard type can be set in each clause
 						name := ts.child[1].child[0].ident
-						interp.nindex++
-						gn := &node{anc: body, interp: interp, ident: name, index: interp.nindex, pos: pos, kind: identExpr, action: aNop, val: &i, gen: nop}
+						nindex = atomic.AddInt64(&interp.nindex, 1)
+						gn := &node{anc: body, interp: interp, ident: name, index: nindex, pos: pos, kind: identExpr, action: aNop, val: &i, gen: nop}
 						body.child = append(body.child, gn)
 					}
 
@@ -458,14 +480,14 @@ func (interp *Interpreter) ast(src, name string) (string, *node, error) {
 				v, _, _, _ := strconv.UnquoteChar(a.Value[1:len(a.Value)-1], '\'')
 				n.rval = reflect.ValueOf(v)
 			case token.FLOAT:
-				v, _ := strconv.ParseFloat(a.Value, 64)
+				v := constant.MakeFromLiteral(a.Value, a.Kind, 0)
 				n.rval = reflect.ValueOf(v)
 			case token.IMAG:
-				v, _ := strconv.ParseFloat(a.Value[:len(a.Value)-1], 64)
-				n.rval = reflect.ValueOf(complex(0, v))
+				v := constant.MakeFromLiteral(a.Value, a.Kind, 0)
+				n.rval = reflect.ValueOf(v)
 			case token.INT:
-				v, _ := strconv.ParseInt(a.Value, 0, 0)
-				n.rval = reflect.ValueOf(int(v))
+				v := constant.MakeFromLiteral(a.Value, a.Kind, 0)
+				n.rval = reflect.ValueOf(v)
 			case token.STRING:
 				v, _ := strconv.Unquote(a.Value)
 				n.rval = reflect.ValueOf(v)
@@ -537,16 +559,35 @@ func (interp *Interpreter) ast(src, name string) (string, *node, error) {
 			st.push(addChild(&root, anc, pos, kind, aNop), nod)
 
 		case *ast.CallExpr:
-			st.push(addChild(&root, anc, pos, callExpr, aCall), nod)
+			action := aCall
+			if a.Ellipsis != token.NoPos {
+				action = aCallSlice
+			}
+
+			st.push(addChild(&root, anc, pos, callExpr, action), nod)
 
 		case *ast.CaseClause:
 			st.push(addChild(&root, anc, pos, caseClause, aCase), nod)
 
 		case *ast.ChanType:
-			st.push(addChild(&root, anc, pos, chanType, aNop), nod)
+			switch a.Dir {
+			case ast.SEND | ast.RECV:
+				st.push(addChild(&root, anc, pos, chanType, aNop), nod)
+			case ast.SEND:
+				st.push(addChild(&root, anc, pos, chanTypeSend, aNop), nod)
+			case ast.RECV:
+				st.push(addChild(&root, anc, pos, chanTypeRecv, aNop), nod)
+			}
 
 		case *ast.CommClause:
-			st.push(addChild(&root, anc, pos, commClause, aNop), nod)
+			kind := commClause
+			if a.Comm == nil {
+				kind = commClauseDefault
+			}
+			st.push(addChild(&root, anc, pos, kind, aNop), nod)
+
+		case *ast.CommentGroup:
+			return false
 
 		case *ast.CompositeLit:
 			st.push(addChild(&root, anc, pos, compositeLitExpr, aCompositeLit), nod)
@@ -555,7 +596,7 @@ func (interp *Interpreter) ast(src, name string) (string, *node, error) {
 			st.push(addChild(&root, anc, pos, declStmt, aNop), nod)
 
 		case *ast.DeferStmt:
-			st.push(addChild(&root, anc, pos, deferStmt, aDefer), nod)
+			st.push(addChild(&root, anc, pos, deferStmt, aNop), nod)
 
 		case *ast.Ellipsis:
 			st.push(addChild(&root, anc, pos, ellipsisExpr, aNop), nod)
@@ -757,6 +798,8 @@ func (interp *Interpreter) ast(src, name string) (string, *node, error) {
 			var kind = unaryExpr
 			var act action
 			switch a.Op {
+			case token.ADD:
+				act = aPos
 			case token.AND:
 				kind = addressExpr
 				act = aAddr
@@ -765,7 +808,9 @@ func (interp *Interpreter) ast(src, name string) (string, *node, error) {
 			case token.NOT:
 				act = aNot
 			case token.SUB:
-				act = aNegate
+				act = aNeg
+			case token.XOR:
+				act = aBitNot
 			}
 			st.push(addChild(&root, anc, pos, kind, act), nod)
 
@@ -837,11 +882,11 @@ func (s *nodestack) top() astNode {
 	return astNode{}
 }
 
-// dup returns a duplicated node subtree
+// dup returns a duplicated node subtree.
 func (interp *Interpreter) dup(nod, anc *node) *node {
-	interp.nindex++
+	nindex := atomic.AddInt64(&interp.nindex, 1)
 	n := *nod
-	n.index = interp.nindex
+	n.index = nindex
 	n.anc = anc
 	n.start = &n
 	n.pos = anc.pos

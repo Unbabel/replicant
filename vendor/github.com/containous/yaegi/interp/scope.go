@@ -6,10 +6,10 @@ import (
 	"strconv"
 )
 
-// A sKind represents the kind of symbol
+// A sKind represents the kind of symbol.
 type sKind uint
 
-// Symbol kinds for the Go interpreter
+// Symbol kinds for the Go interpreter.
 const (
 	undefSym sKind = iota
 	binSym         // Binary from runtime
@@ -74,15 +74,19 @@ type symbol struct {
 // execution to the index in frame, created exactly from the types layout.
 //
 type scope struct {
-	anc    *scope             // Ancestor upper scope
-	def    *node              // function definition node this scope belongs to, or nil
-	types  []reflect.Type     // Frame layout, may be shared by same level scopes
-	level  int                // Frame level: number of frame indirections to access var during execution
-	sym    map[string]*symbol // Map of symbols defined in this current scope
-	global bool               // true if scope refers to global space (single frame for universe and package level scopes)
+	anc         *scope             // Ancestor upper scope
+	def         *node              // function definition node this scope belongs to, or nil
+	loop        *node              // loop exit node for break statement
+	loopRestart *node              // loop restart node for continue statement
+	pkgID       string             // unique id of package in which scope is defined
+	types       []reflect.Type     // Frame layout, may be shared by same level scopes
+	level       int                // Frame level: number of frame indirections to access var during execution
+	sym         map[string]*symbol // Map of symbols defined in this current scope
+	global      bool               // true if scope refers to global space (single frame for universe and package level scopes)
+	iota        int                // iota value in this scope
 }
 
-// push creates a new scope and chain it to the current one
+// push creates a new scope and chain it to the current one.
 func (s *scope) push(indirect bool) *scope {
 	sc := scope{anc: s, level: s.level, sym: map[string]*symbol{}}
 	if indirect {
@@ -95,6 +99,8 @@ func (s *scope) push(indirect bool) *scope {
 		sc.global = s.global
 		sc.level = s.level
 	}
+	// inherit loop state and pkgID from ancestor
+	sc.loop, sc.loopRestart, sc.pkgID = s.loop, s.loopRestart, s.pkgID
 	return &sc
 }
 
@@ -111,12 +117,15 @@ func (s *scope) pop() *scope {
 
 // lookup searches for a symbol in the current scope, and upper ones if not found
 // it returns the symbol, the number of indirections level from the current scope
-// and status (false if no result)
+// and status (false if no result).
 func (s *scope) lookup(ident string) (*symbol, int, bool) {
 	level := s.level
-	for s != nil {
+	for {
 		if sym, ok := s.sym[ident]; ok {
 			return sym, level - s.level, true
+		}
+		if s.anc == nil {
+			break
 		}
 		s = s.anc
 	}
@@ -125,11 +134,41 @@ func (s *scope) lookup(ident string) (*symbol, int, bool) {
 
 func (s *scope) rangeChanType(n *node) *itype {
 	if sym, _, found := s.lookup(n.child[1].ident); found {
-		if t := sym.typ; len(n.child) == 3 && t != nil && t.cat == chanT {
+		if t := sym.typ; len(n.child) == 3 && t != nil && (t.cat == chanT || t.cat == chanRecvT) {
 			return t
 		}
 	}
+
+	c := n.child[1]
+	if c.typ == nil {
+		return nil
+	}
+	switch {
+	case c.typ.cat == chanT, c.typ.cat == chanRecvT:
+		return c.typ
+	case c.typ.cat == valueT && c.typ.rtype.Kind() == reflect.Chan:
+		return &itype{cat: chanT, val: &itype{cat: valueT, rtype: c.typ.rtype.Elem()}}
+	}
+
 	return nil
+}
+
+// fixType returns the input type, or a valid default type for untyped constant.
+func (s *scope) fixType(t *itype) *itype {
+	if !t.untyped || t.cat != valueT {
+		return t
+	}
+	switch typ := t.TypeOf(); typ.Kind() {
+	case reflect.Int64:
+		return s.getType("int")
+	case reflect.Uint64:
+		return s.getType("uint")
+	case reflect.Float64:
+		return s.getType("float64")
+	case reflect.Complex128:
+		return s.getType("complex128")
+	}
+	return t
 }
 
 func (s *scope) getType(ident string) *itype {
@@ -142,7 +181,7 @@ func (s *scope) getType(ident string) *itype {
 	return t
 }
 
-// add adds a type to the scope types array, and returns its index
+// add adds a type to the scope types array, and returns its index.
 func (s *scope) add(typ *itype) (index int) {
 	if typ == nil {
 		log.Panic("nil type")
@@ -156,18 +195,15 @@ func (s *scope) add(typ *itype) (index int) {
 	return
 }
 
-func (interp *Interpreter) initScopePkg(n *node) (*scope, string) {
+func (interp *Interpreter) initScopePkg(pkgID string) *scope {
 	sc := interp.universe
-	pkgName := mainID
 
-	if p := fileNode(n); p != nil {
-		pkgName = p.child[0].ident
+	interp.mutex.Lock()
+	if _, ok := interp.scopes[pkgID]; !ok {
+		interp.scopes[pkgID] = sc.pushBloc()
 	}
-
-	if _, ok := interp.scopes[pkgName]; !ok {
-		interp.scopes[pkgName] = sc.pushBloc()
-	}
-
-	sc = interp.scopes[pkgName]
-	return sc, pkgName
+	sc = interp.scopes[pkgID]
+	sc.pkgID = pkgID
+	interp.mutex.Unlock()
+	return sc
 }
