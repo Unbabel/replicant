@@ -1315,7 +1315,6 @@ func getIndexMap(n *node) {
 	z := reflect.New(n.child[0].typ.frameType().Elem()).Elem()
 
 	if n.child[1].rval.IsValid() { // constant map index
-		convertConstantValue(n.child[1])
 		mi := n.child[1].rval
 
 		switch {
@@ -1409,7 +1408,6 @@ func getIndexMap2(n *node) {
 		return
 	}
 	if n.child[1].rval.IsValid() { // constant map index
-		convertConstantValue(n.child[1])
 		mi := n.child[1].rval
 		switch {
 		case !doValue:
@@ -1894,7 +1892,7 @@ func arrayLit(n *node) {
 	value := valueGenerator(n, n.findex)
 	next := getExec(n.tnext)
 	child := n.child
-	if !n.typ.untyped {
+	if n.nleft == 1 {
 		child = n.child[1:]
 	}
 
@@ -1947,7 +1945,7 @@ func mapLit(n *node) {
 	value := valueGenerator(n, n.findex)
 	next := getExec(n.tnext)
 	child := n.child
-	if !n.typ.untyped {
+	if n.nleft == 1 {
 		child = n.child[1:]
 	}
 	typ := n.typ.TypeOf()
@@ -1982,7 +1980,7 @@ func compositeBinMap(n *node) {
 	value := valueGenerator(n, n.findex)
 	next := getExec(n.tnext)
 	child := n.child
-	if !n.typ.untyped {
+	if n.nleft == 1 {
 		child = n.child[1:]
 	}
 	typ := n.typ.TypeOf()
@@ -2116,8 +2114,6 @@ func doCompositeSparse(n *node, hasType bool) {
 		switch {
 		case c1.typ.cat == funcT:
 			values[field] = genFunctionWrapper(c1)
-		case c1.typ.cat == interfaceT:
-			values[field] = genValueInterfaceValue(c1)
 		case isArray(c1.typ) && c1.typ.val != nil && c1.typ.val.cat == interfaceT:
 			values[field] = genValueInterfaceArray(c1)
 		case isRecursiveType(n.typ.field[field].typ, n.typ.field[field].typ.rtype):
@@ -2795,20 +2791,6 @@ func convertLiteralValue(n *node, t reflect.Type) {
 	}
 }
 
-var bitlen = [...]int{
-	reflect.Int:     64,
-	reflect.Int8:    8,
-	reflect.Int16:   16,
-	reflect.Int32:   32,
-	reflect.Int64:   64,
-	reflect.Uint:    64,
-	reflect.Uint8:   8,
-	reflect.Uint16:  16,
-	reflect.Uint32:  32,
-	reflect.Uint64:  64,
-	reflect.Uintptr: 64,
-}
-
 func convertConstantValue(n *node) {
 	if !n.rval.IsValid() {
 		return
@@ -3025,7 +3007,7 @@ func slice(n *node) {
 	case 2:
 		n.exec = func(f *frame) bltn {
 			a := value0(f)
-			getFrame(f, l).data[i] = a.Slice(int(value1(f).Int()), a.Len())
+			getFrame(f, l).data[i] = a.Slice(int(vInt(value1(f))), a.Len())
 			return next
 		}
 	case 3:
@@ -3033,7 +3015,7 @@ func slice(n *node) {
 
 		n.exec = func(f *frame) bltn {
 			a := value0(f)
-			getFrame(f, l).data[i] = a.Slice(int(value1(f).Int()), int(value2(f).Int()))
+			getFrame(f, l).data[i] = a.Slice(int(vInt(value1(f))), int(vInt(value2(f))))
 			return next
 		}
 	case 4:
@@ -3042,7 +3024,7 @@ func slice(n *node) {
 
 		n.exec = func(f *frame) bltn {
 			a := value0(f)
-			getFrame(f, l).data[i] = a.Slice3(int(value1(f).Int()), int(value2(f).Int()), int(value3(f).Int()))
+			getFrame(f, l).data[i] = a.Slice3(int(vInt(value1(f))), int(vInt(value2(f))), int(vInt(value3(f))))
 			return next
 		}
 	}
@@ -3066,7 +3048,7 @@ func slice0(n *node) {
 		value1 := genValue(n.child[1])
 		n.exec = func(f *frame) bltn {
 			a := value0(f)
-			getFrame(f, l).data[i] = a.Slice(0, int(value1(f).Int()))
+			getFrame(f, l).data[i] = a.Slice(0, int(vInt(value1(f))))
 			return next
 		}
 	case 3:
@@ -3074,7 +3056,7 @@ func slice0(n *node) {
 		value2 := genValue(n.child[2])
 		n.exec = func(f *frame) bltn {
 			a := value0(f)
-			getFrame(f, l).data[i] = a.Slice3(0, int(value1(f).Int()), int(value2(f).Int()))
+			getFrame(f, l).data[i] = a.Slice3(0, int(vInt(value1(f))), int(vInt(value2(f))))
 			return next
 		}
 	}
