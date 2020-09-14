@@ -155,17 +155,36 @@ func genValueArray(n *node) func(*frame) reflect.Value {
 
 func genValueRangeArray(n *node) func(*frame) reflect.Value {
 	value := genValue(n)
-	// dereference array pointer, to support array operations on array pointer
-	if n.typ.TypeOf().Kind() == reflect.Ptr {
+
+	switch {
+	case n.typ.TypeOf().Kind() == reflect.Ptr:
+		// dereference array pointer, to support array operations on array pointer
 		return func(f *frame) reflect.Value {
 			return value(f).Elem()
 		}
-	}
-	return func(f *frame) reflect.Value {
-		// This is necessary to prevent changes in the returned
-		// reflect.Value being reflected back to the value used
-		// for the range expression.
-		return reflect.ValueOf(value(f).Interface())
+	case n.typ.val != nil && n.typ.val.cat == interfaceT:
+		return func(f *frame) reflect.Value {
+			val := value(f)
+			v := []valueInterface{}
+			for i := 0; i < val.Len(); i++ {
+				switch av := val.Index(i).Interface().(type) {
+				case []valueInterface:
+					v = append(v, av...)
+				case valueInterface:
+					v = append(v, av)
+				default:
+					panic(n.cfgErrorf("invalid type %v", val.Index(i).Type()))
+				}
+			}
+			return reflect.ValueOf(v)
+		}
+	default:
+		return func(f *frame) reflect.Value {
+			// This is necessary to prevent changes in the returned
+			// reflect.Value being reflected back to the value used
+			// for the range expression.
+			return reflect.ValueOf(value(f).Interface())
+		}
 	}
 }
 
@@ -315,10 +334,6 @@ func vInt(v reflect.Value) (i int64) {
 	case reflect.Complex64, reflect.Complex128:
 		i = int64(real(v.Complex()))
 	}
-	if v.Type().Implements(constVal) {
-		c := v.Interface().(constant.Value)
-		i, _ = constant.Int64Val(constant.ToInt(c))
-	}
 	return
 }
 
@@ -332,11 +347,6 @@ func vUint(v reflect.Value) (i uint64) {
 		i = uint64(v.Float())
 	case reflect.Complex64, reflect.Complex128:
 		i = uint64(real(v.Complex()))
-	}
-	if v.Type().Implements(constVal) {
-		c := v.Interface().(constant.Value)
-		iv, _ := constant.Int64Val(constant.ToInt(c))
-		i = uint64(iv)
 	}
 	return
 }
@@ -352,13 +362,6 @@ func vComplex(v reflect.Value) (c complex128) {
 	case reflect.Complex64, reflect.Complex128:
 		c = v.Complex()
 	}
-	if v.Type().Implements(constVal) {
-		con := v.Interface().(constant.Value)
-		con = constant.ToComplex(con)
-		rel, _ := constant.Float64Val(constant.Real(con))
-		img, _ := constant.Float64Val(constant.Imag(con))
-		c = complex(rel, img)
-	}
 	return
 }
 
@@ -372,10 +375,6 @@ func vFloat(v reflect.Value) (i float64) {
 		i = v.Float()
 	case reflect.Complex64, reflect.Complex128:
 		i = real(v.Complex())
-	}
-	if v.Type().Implements(constVal) {
-		c := v.Interface().(constant.Value)
-		i, _ = constant.Float64Val(constant.ToFloat(c))
 	}
 	return
 }

@@ -20,6 +20,7 @@ package manager
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -38,7 +39,10 @@ import (
 
 const (
 	// DefaultTransactionTimeout if not specified
-	DefaultTransactionTimeout = "5m"
+	DefaultTransactionTimeout = "1m"
+
+	// default timeout grace period
+	defaultTimeoutGracePeriod = time.Second * 20
 )
 
 // Emitter is the interface for result emitters to external systems
@@ -131,7 +135,23 @@ func (m *Manager) Run(c transaction.Config) (r transaction.Result) {
 			uuid, c, start, fmt.Errorf("manager: error creating executor request: %w", err))
 	}
 
-	res, err := m.client.Do(req)
+	// Use the default timeout when unspecified
+	if c.Timeout == "" {
+		c.Timeout = DefaultTransactionTimeout
+	}
+
+	// Ensure we timeout on executor calls. Use the transaction timeout plus
+	// a grace period in order to have a timeout greater than the execution time.
+	timeout, err := time.ParseDuration(c.Timeout)
+	if err != nil {
+		return wrapErrorResult(
+			uuid, c, start, fmt.Errorf("manager: error parsing timeout from template: %w", err))
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout+defaultTimeoutGracePeriod)
+	defer cancel()
+
+	res, err := m.client.Do(req.WithContext(ctx))
 	if err != nil {
 		return wrapErrorResult(
 			uuid, c, start, fmt.Errorf("manager: error sending executor request: %w", err))
