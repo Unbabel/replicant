@@ -12,6 +12,10 @@ It allows web application testing using chromedp, and api application testing us
 
 ***Under heavy development and API changes are expected. Please file an issue if anything breaks.***
 
+## Requirements
+
+* Go > 1.15
+
 ## Runing replicant
 
 The replicant binary packs all functionality needed to run the server, executor and run local execution of tests for development or CI/CD purposes.
